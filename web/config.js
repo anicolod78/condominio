@@ -7,7 +7,7 @@
 export const SUPABASE_URL = 'https://nkfonqmlpyhaqxlcdicf.supabase.co';
 export const SUPABASE_KEY = 'sb_publishable_bndPJSfzu-FqtKAWYuIXhQ_W2O9R2DP';
 
-export const NOME_CONDOMINIO = 'Condominio';
+export const NOME_CONDOMINIO = 'Condominio Italia 71';
 
 export const CATEGORIE_DOCUMENTI = [
   'Verbali assemblea',
