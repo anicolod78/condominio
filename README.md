@@ -1,6 +1,6 @@
 # Portale Condominio
 
-Piccolo portale riservato ai condomini: **bacheca avvisi**, **archivio documenti** e **sondaggi**.
+Piccolo portale riservato ai condomini: **bacheca avvisi**, **archivio documenti**, **sondaggi** ed **elenco condomini**.
 
 - **Frontend**: HTML e JavaScript statici in `web/`, pubblicati su **GitHub Pages**. Nessuna build.
 - **Backend**: **Supabase** (piano gratuito) per login via email, database Postgres e archivio file.
@@ -8,7 +8,10 @@ Piccolo portale riservato ai condomini: **bacheca avvisi**, **archivio documenti
 
 ```
 condominio/
-├── supabase/schema.sql          tabelle, permessi (RLS), bucket file
+├── supabase/
+│   ├── schema.sql               tabelle, permessi (RLS), bucket file
+│   ├── 002_elenco_condomini.sql elenco condomini e profilo personale
+│   └── 003_sicurezza_funzioni.sql correzioni del Security Advisor
 ├── web/                         sito pubblicato su GitHub Pages
 │   ├── config.js                ← URL e chiave pubblica Supabase
 │   ├── index.html
@@ -24,8 +27,12 @@ condominio/
 |---|---|---|
 | Leggere avvisi e scaricare documenti | ✔ | ✔ |
 | Votare (e cambiare voto finché il sondaggio è aperto) | ✔ | ✔ |
+| Vedere l'elenco condomini (nome e unità) | ✔ | ✔ |
+| Modificare il proprio nome e telefono e scegliere se mostrare i contatti | ✔ | ✔ |
 | Pubblicare avvisi, caricare documenti, creare e chiudere sondaggi | | ✔ |
 | Gestire nome, unità e ruolo dei condomini | | ✔ |
+
+Nell'elenco condomini email e telefono sono visibili agli altri solo se la persona lo sceglie dal proprio profilo. Il consenso è disattivato per impostazione predefinita.
 
 I voti sono riservati: ognuno vede solo il proprio. I risultati complessivi compaiono dopo aver votato o alla chiusura del sondaggio. Anche l'admin vede solo i totali.
 
@@ -40,7 +47,7 @@ I voti sono riservati: ognuno vede solo il proprio. I risultati complessivi comp
 
 ### 2. Crea il database
 1. Menu **SQL Editor** → **New query**.
-2. Incolla tutto il contenuto di [`supabase/schema.sql`](supabase/schema.sql) e premi **Run**.
+2. Incolla tutto il contenuto di [`supabase/schema.sql`](supabase/schema.sql) e premi **Run**. Poi fai lo stesso, ognuno in una nuova query, con [`supabase/002_elenco_condomini.sql`](supabase/002_elenco_condomini.sql) e [`supabase/003_sicurezza_funzioni.sql`](supabase/003_sicurezza_funzioni.sql). Gli script vanno eseguiti in ordine, una volta sola.
 3. Controlla che in **Table Editor** compaiano `profiles`, `announcements`, `documents`, `polls`, `poll_options` e `votes`, e che in **Storage** ci sia il bucket `documenti`.
 
 ### 3. Configura l'autenticazione

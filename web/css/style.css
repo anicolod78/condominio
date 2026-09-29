@@ -84,7 +84,8 @@ input, select, textarea {
   width: 100%;
 }
 input[type=checkbox], input[type=radio] { width: auto; }
-#doc-search { margin-bottom: 16px; }
+#doc-search, #people-search { margin-bottom: 16px; }
+.directory a { color: var(--accent); text-decoration: none; word-break: break-all; }
 
 button {
   font: inherit;

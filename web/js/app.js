@@ -5,9 +5,10 @@ import * as login from './views/login.js';
 import * as bacheca from './views/bacheca.js';
 import * as documenti from './views/documenti.js';
 import * as sondaggi from './views/sondaggi.js';
+import * as condomini from './views/condomini.js';
 import * as gestione from './views/gestione.js';
 
-const routes = { '': bacheca, documenti, sondaggi, gestione };
+const routes = { '': bacheca, documenti, sondaggi, condomini, gestione };
 
 const app = document.getElementById('app');
 const nav = document.getElementById('nav');
