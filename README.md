@@ -56,7 +56,7 @@ In **Authentication**:
 2. **Emails → SMTP Settings**: configura un **SMTP personalizzato**. Il servizio email integrato di Supabase invia messaggi solo agli indirizzi del tuo team Supabase, con limiti molto bassi: senza SMTP i condomini non riceverebbero inviti né link di accesso. Opzioni gratuite:
    - **Brevo** (300 email al giorno gratis). Basta verificare l'indirizzo mittente, non serve un dominio. Host `smtp-relay.brevo.com`, porta `587`, utente e chiave SMTP dalla sezione *SMTP & API* di Brevo.
    - **Gmail** con una *password per le app* (serve la verifica in due passaggi). Host `smtp.gmail.com`, porta `587`. Adatto a volumi piccoli.
-3. **Emails → Templates** (facoltativo): traduci in italiano i modelli *Invite user* e *Magic Link*. Vedi gli esempi più sotto.
+3. **Emails → Templates**: sostituisci il modello **Magic Link** con quello in italiano riportato più sotto. Contiene sia il link sia il **codice di accesso** (`{{ .Token }}`): senza questo modello chi chiede il codice non lo riceve. Il modello *Invite user* è facoltativo.
 4. Gli **URL** li configuri al passo 6, quando conosci l'indirizzo del sito.
 
 ### 4. Collega il sito a Supabase
@@ -106,12 +106,32 @@ Questa funzione permette all'admin di invitare e rimuovere i condomini direttame
 
 La chiave secret non va configurata: Supabase la mette a disposizione della funzione in automatico.
 
-### 9. Invita i condomini
+### 9. Attiva l'accesso con Google (facoltativo)
+Funziona per chi ha un account Google (Gmail o Google Workspace) **con lo stesso indirizzo con cui è stato invitato**. Gli account Google non invitati vengono rifiutati, perché le nuove registrazioni sono disattivate.
+
+**Su Google Cloud** (<https://console.cloud.google.com>, gratuito):
+1. Crea un nuovo progetto, es. `portale-condominio`.
+2. Vai su **Google Auth Platform → Branding**: inserisci il nome dell'app (es. "Portale Condominio") e l'email di assistenza. Non caricare un logo: richiederebbe la verifica di Google.
+3. In **Audience** scegli il tipo **External**, poi premi **Publish app** per metterla *In production*. In modalità *Testing* possono entrare solo gli utenti di test. Si usano solo i dati di base (email e nome), quindi non serve la verifica di Google.
+4. In **Clients → Create client** scegli il tipo **Web application**:
+   - **Authorized JavaScript origins**: `https://TUO-UTENTE.github.io`
+   - **Authorized redirect URIs**: `https://TUO-PROGETTO.supabase.co/auth/v1/callback`. L'indirizzo esatto lo trovi anche in Supabase, nella scheda del provider Google.
+5. Copia **Client ID** e **Client secret**.
+
+**Su Supabase**: **Authentication → Sign In / Providers → Google**. Attivalo, incolla Client ID e Client secret e salva.
+
+Nota: nella schermata di consenso Google comparirà l'indirizzo `TUO-PROGETTO.supabase.co`. Per mostrare un dominio personalizzato serve un piano Supabase a pagamento.
+
+### 10. Invita i condomini
 - Dal portale: **Gestione → Invita un condomino** (email e, se vuoi, nome e unità). In alternativa: **Authentication → Users → Add user → Send invitation**.
 - Dallo stesso elenco puoi correggere nome, unità e ruolo, oppure **Rimuovere** chi lascia il condominio.
-- Agli accessi successivi basta inserire la propria email sulla pagina di login e cliccare il link ricevuto. Non ci sono password.
+- Agli accessi successivi, dalla pagina di login si può:
+  - premere **Accedi con Google**;
+  - oppure inserire la propria email e poi aprire il link ricevuto **o** digitare il codice contenuto nell'email. Il codice è comodo quando si legge la posta sul telefono ma si usa il portale dal computer.
 
-### 10. Prova in locale (facoltativo)
+  Non ci sono password.
+
+### 11. Prova in locale (facoltativo)
 Serve un qualsiasi server statico sulla porta 8000 che pubblichi la cartella `web/`, per esempio:
 - **VS Code** con l'estensione *Live Server* (imposta la porta 8000 in `liveServer.settings.port`);
 - **Python**: `python -m http.server 8000` dentro `web/`;
@@ -136,21 +156,23 @@ Poi apri <http://localhost:8000/>. Non aprire `index.html` con doppio clic: i mo
 - Quando qualcuno vende o lascia l'appartamento, rimuovilo da **Gestione** (oppure da **Authentication → Users**). Profilo e voti vengono rimossi di conseguenza.
 - I sondaggi sono **consultivi** e non sostituiscono le delibere dell'assemblea.
 
-## Modelli email in italiano (facoltativi)
+## Modelli email in italiano
 
 **Invite user** — oggetto: `Invito al portale del condominio`
 ```html
 <h2>Benvenuto/a nel portale del condominio</h2>
 <p>Sei stato/a invitato/a ad accedere al portale riservato ai condomini.</p>
 <p><a href="{{ .ConfirmationURL }}">Accedi al portale</a></p>
-<p>Per gli accessi successivi, inserisci la tua email sulla pagina del portale: riceverai un nuovo link.</p>
+<p>Per gli accessi successivi puoi usare "Accedi con Google" oppure inserire la tua email nella pagina del portale: riceverai un link e un codice.</p>
 ```
 
-**Magic Link** — oggetto: `Il tuo link di accesso al portale`
+**Magic Link** (necessario per il codice di accesso) — oggetto: `Il tuo accesso al portale del condominio`
 ```html
 <h2>Accesso al portale del condominio</h2>
 <p><a href="{{ .ConfirmationURL }}">Clicca qui per entrare</a></p>
-<p>Il link è valido per un solo accesso. Se non l'hai richiesto, ignora questa email.</p>
+<p>Oppure inserisci questo codice nella pagina di accesso:</p>
+<p style="font-size:24px;font-weight:bold;letter-spacing:4px">{{ .Token }}</p>
+<p>Link e codice sono validi per un solo accesso e scadono dopo poco tempo. Se non hai richiesto l'accesso, ignora questa email.</p>
 ```
 
 ## Possibili estensioni
