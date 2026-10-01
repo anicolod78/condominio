@@ -97,12 +97,21 @@ Il link contenuto nelle email di invito e di accesso rimanda qui.
    ```
 4. Ricarica il portale: compare la voce **Gestione**.
 
-### 8. Invita i condomini
-- Per ogni condomino: **Authentication → Users → Add user → Send invitation**.
-- Poi, in **Gestione** sul portale, inserisci nome e unità (es. "Scala A int. 3").
+### 8. Pubblica la funzione per gli inviti
+Questa funzione permette all'admin di invitare e rimuovere i condomini direttamente dal portale.
+1. In Supabase vai su **Edge Functions → Deploy a new function → Via Editor**.
+2. Come nome inserisci esattamente `gestione-utenti`.
+3. Sostituisci il codice di esempio con il contenuto di [`supabase/functions/gestione-utenti/index.ts`](supabase/functions/gestione-utenti/index.ts) e premi **Deploy function**.
+4. Nei **Details / Settings** della funzione **disattiva "Verify JWT"** (*Enforce JWT verification*) e salva. Il controllo di chi la chiama, cioè utente valido e ruolo admin, lo fa la funzione stessa.
+
+La chiave secret non va configurata: Supabase la mette a disposizione della funzione in automatico.
+
+### 9. Invita i condomini
+- Dal portale: **Gestione → Invita un condomino** (email e, se vuoi, nome e unità). In alternativa: **Authentication → Users → Add user → Send invitation**.
+- Dallo stesso elenco puoi correggere nome, unità e ruolo, oppure **Rimuovere** chi lascia il condominio.
 - Agli accessi successivi basta inserire la propria email sulla pagina di login e cliccare il link ricevuto. Non ci sono password.
 
-### 9. Prova in locale (facoltativo)
+### 10. Prova in locale (facoltativo)
 Serve un qualsiasi server statico sulla porta 8000 che pubblichi la cartella `web/`, per esempio:
 - **VS Code** con l'estensione *Live Server* (imposta la porta 8000 in `liveServer.settings.port`);
 - **Python**: `python -m http.server 8000` dentro `web/`;
@@ -124,7 +133,7 @@ Poi apri <http://localhost:8000/>. Non aprire `index.html` con doppio clic: i mo
 ## Privacy (GDPR) — promemoria
 - Il portale tratta dati personali (email, nomi, unità, documenti). Aggiungi un'informativa essenziale: chi è il titolare, quali dati, per quale finalità, per quanto tempo.
 - Carica solo documenti destinati a tutti i condomini. Evita, o anonimizza, quelli con dati di singole persone (morosità, contenziosi, dati sanitari).
-- Quando qualcuno vende o lascia l'appartamento, elimina il suo utente da **Authentication → Users**. Profilo e voti vengono rimossi di conseguenza.
+- Quando qualcuno vende o lascia l'appartamento, rimuovilo da **Gestione** (oppure da **Authentication → Users**). Profilo e voti vengono rimossi di conseguenza.
 - I sondaggi sono **consultivi** e non sostituiscono le delibere dell'assemblea.
 
 ## Modelli email in italiano (facoltativi)

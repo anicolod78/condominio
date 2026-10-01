@@ -42,9 +42,17 @@ export async function render(app, ctx) {
     </section>
 
     <section class="card">
+      <h2>Invita un condomino</h2>
+      <form id="f-invito" class="stack">
+        <label>Email <input type="email" name="email" required autocomplete="off"></label>
+        <label>Nome e cognome (facoltativo) <input name="full_name" maxlength="120"></label>
+        <label>Unità (facoltativa) <input name="unit" placeholder="es. Scala A int. 3"></label>
+        <button type="submit">Invia invito</button>
+      </form>
+    </section>
+
+    <section class="card">
       <h2>Condomini (${profiles.length})</h2>
-      <p class="muted small">Per aggiungere una persona: Supabase → Authentication → Users → <em>Invite user</em>.
-        Dopo l'invito comparirà qui e potrai indicarne nome e unità.</p>
       <table class="people">
         <tr><th>Email</th><th>Nome</th><th>Unità</th><th>Ruolo</th><th></th></tr>
         ${profiles.map((p) => `
@@ -58,7 +66,10 @@ export async function render(app, ctx) {
                 <option value="admin" ${p.role === 'admin' ? 'selected' : ''}>Admin</option>
               </select>
             </td>
-            <td><button class="link" data-save="${p.id}">Salva</button></td>
+            <td class="actions">
+              <button class="link" data-save="${p.id}">Salva</button>
+              ${p.id === ctx.profile.id ? '' : `<button class="link danger" data-remove="${p.id}">Rimuovi</button>`}
+            </td>
           </tr>`).join('')}
       </table>
     </section>`;
@@ -115,6 +126,26 @@ export async function render(app, ctx) {
     flash('Sondaggio creato');
   });
 
+  bindForm(app.querySelector('#f-invito'), async (form) => {
+    await manageUsers({
+      action: 'invite',
+      email: form.email.value,
+      full_name: form.full_name.value,
+      unit: form.unit.value,
+      redirectTo: location.origin + location.pathname,
+    });
+    flash(`Invito inviato a ${form.email.value.trim()}`);
+    await render(app, ctx);
+  });
+
+  onEach(app, '[data-remove]', async (btn) => {
+    const person = profiles.find((p) => p.id === btn.dataset.remove);
+    if (!confirm(`Rimuovere ${person.full_name || person.email} dal portale? Perderà l'accesso e i suoi voti saranno cancellati.`)) return;
+    await manageUsers({ action: 'delete', user_id: person.id });
+    flash('Condomino rimosso');
+    await render(app, ctx);
+  });
+
   onEach(app, '[data-save]', async (btn) => {
     const row = btn.closest('tr');
     const changes = {
@@ -126,4 +157,14 @@ export async function render(app, ctx) {
     ensure(await supabase.from('profiles').update(changes).eq('id', btn.dataset.save));
     flash('Dati salvati');
   });
+}
+
+// Inviti e rimozioni passano dalla Edge Function, che custodisce la chiave secret
+async function manageUsers(body) {
+  const { data, error } = await supabase.functions.invoke('gestione-utenti', { body });
+  if (error) {
+    const details = await error.context?.json?.().catch(() => null);
+    throw new Error(details?.error ?? error.message);
+  }
+  return data;
 }
