@@ -96,7 +96,7 @@ Il link contenuto nelle email di invito e di accesso rimanda qui.
    ```sql
    update public.profiles set role = 'admin' where email = 'tua@email.it';
    ```
-4. Ricarica il portale: compare la voce **Gestione**.
+4. Ricarica il portale: compare la voce **Gestione**, divisa nelle schede Avvisi, Documenti, Sondaggi e Condomini.
 
 ### 8. Pubblica la funzione per gli inviti
 Questa funzione permette all'admin di invitare e rimuovere i condomini direttamente dal portale.
@@ -124,7 +124,7 @@ Funziona per chi ha un account Google (Gmail o Google Workspace) **con lo stesso
 Nota: nella schermata di consenso Google comparirà l'indirizzo `TUO-PROGETTO.supabase.co`. Per mostrare un dominio personalizzato serve un piano Supabase a pagamento.
 
 ### 10. Invita i condomini
-- Dal portale: **Gestione → Invita un condomino** (email e, se vuoi, nome e unità). In alternativa: **Authentication → Users → Add user → Send invitation**.
+- Dal portale: **Gestione → Condomini → Invita un condomino** (email e, se vuoi, nome e unità). In alternativa: **Authentication → Users → Add user → Send invitation**.
 - Dallo stesso elenco puoi correggere nome, unità e ruolo, oppure **Rimuovere** chi lascia il condominio.
 - Agli accessi successivi, dalla pagina di login si può:
   - premere **Accedi con Google**;
@@ -154,7 +154,7 @@ Poi apri <http://localhost:8000/>. Non aprire `index.html` con doppio clic: i mo
 ## Privacy (GDPR) — promemoria
 - Il portale tratta dati personali (email, nomi, unità, documenti). Aggiungi un'informativa essenziale: chi è il titolare, quali dati, per quale finalità, per quanto tempo.
 - Carica solo documenti destinati a tutti i condomini. Evita, o anonimizza, quelli con dati di singole persone (morosità, contenziosi, dati sanitari).
-- Quando qualcuno vende o lascia l'appartamento, rimuovilo da **Gestione** (oppure da **Authentication → Users**). Profilo e voti vengono rimossi di conseguenza.
+- Quando qualcuno vende o lascia l'appartamento, rimuovilo da **Gestione → Condomini** (oppure da **Authentication → Users**). Profilo e voti vengono rimossi di conseguenza.
 - I sondaggi sono **consultivi** e non sostituiscono le delibere dell'assemblea.
 
 ## Modelli email in italiano

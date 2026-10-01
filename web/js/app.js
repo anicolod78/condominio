@@ -6,7 +6,7 @@ import * as bacheca from './views/bacheca.js';
 import * as documenti from './views/documenti.js';
 import * as sondaggi from './views/sondaggi.js';
 import * as condomini from './views/condomini.js';
-import * as gestione from './views/gestione.js';
+import * as gestione from './views/gestione/index.js';
 
 const routes = { '': bacheca, documenti, sondaggi, condomini, gestione };
 
@@ -17,10 +17,12 @@ let profile = null;
 document.title = NOME_CONDOMINIO;
 document.getElementById('brand').textContent = NOME_CONDOMINIO;
 
-// Le pagine usano "#/nome". Il link ricevuto via email arriva invece con
-// "#access_token=..." o "#error=...": in quel caso si mostra la bacheca.
+// Le pagine usano "#/nome" o "#/nome/sezione". Il link ricevuto via email arriva
+// invece con "#access_token=..." o "#error=...": in quel caso si mostra la bacheca.
 function currentRoute() {
-  return location.hash.startsWith('#/') ? location.hash.slice(2) : '';
+  const path = location.hash.startsWith('#/') ? location.hash.slice(2) : '';
+  const [route = '', sub = ''] = path.split('/');
+  return { route, sub };
 }
 
 async function render() {
@@ -38,7 +40,7 @@ async function render() {
   }
   const isAdmin = profile.role === 'admin';
 
-  const route = currentRoute();
+  const { route, sub } = currentRoute();
   let view = routes[route] ?? bacheca;
   if (view === gestione && !isAdmin) view = bacheca;
 
@@ -49,7 +51,7 @@ async function render() {
   }
 
   app.innerHTML = '<p class="muted">Caricamento…</p>';
-  await view.render(app, { profile, isAdmin });
+  await view.render(app, { profile, isAdmin, sub });
 }
 
 async function safeRender() {
