@@ -1,6 +1,6 @@
 import { supabase, BUCKET } from '../supabase.js';
 import { CATEGORIE_DOCUMENTI } from '../../config.js';
-import { esc, ensure, flash, bindForm, onEach } from '../ui.js';
+import { esc, ensure, flash, bindForm, onEach, todayISO } from '../ui.js';
 
 export async function render(app, ctx) {
   const profiles = ensure(await supabase.from('profiles').select('*').order('unit').order('email'));
@@ -25,6 +25,7 @@ export async function render(app, ctx) {
         <label>Categoria
           <select name="category">${CATEGORIE_DOCUMENTI.map((c) => `<option>${esc(c)}</option>`).join('')}</select>
         </label>
+        <label>Data di riferimento <input type="date" name="document_date" value="${todayISO()}" required></label>
         <label>File (max 25 MB) <input type="file" name="file" required></label>
         <button type="submit">Carica</button>
       </form>
@@ -93,6 +94,7 @@ export async function render(app, ctx) {
     const { error } = await supabase.from('documents').insert({
       title: form.title.value.trim(),
       category: form.category.value,
+      document_date: form.document_date.value,
       file_path: path,
       file_name: file.name,
       size_bytes: file.size,

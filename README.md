@@ -11,7 +11,8 @@ condominio/
 ├── supabase/
 │   ├── schema.sql               tabelle, permessi (RLS), bucket file
 │   ├── 002_elenco_condomini.sql elenco condomini e profilo personale
-│   └── 003_sicurezza_funzioni.sql correzioni del Security Advisor
+│   ├── 003_sicurezza_funzioni.sql correzioni del Security Advisor
+│   └── 004_data_documenti.sql   data di riferimento dei documenti
 ├── web/                         sito pubblicato su GitHub Pages
 │   ├── config.js                ← URL e chiave pubblica Supabase
 │   ├── index.html
@@ -47,7 +48,7 @@ I voti sono riservati: ognuno vede solo il proprio. I risultati complessivi comp
 
 ### 2. Crea il database
 1. Menu **SQL Editor** → **New query**.
-2. Incolla tutto il contenuto di [`supabase/schema.sql`](supabase/schema.sql) e premi **Run**. Poi fai lo stesso, ognuno in una nuova query, con [`supabase/002_elenco_condomini.sql`](supabase/002_elenco_condomini.sql) e [`supabase/003_sicurezza_funzioni.sql`](supabase/003_sicurezza_funzioni.sql). Gli script vanno eseguiti in ordine, una volta sola.
+2. Incolla tutto il contenuto di [`supabase/schema.sql`](supabase/schema.sql) e premi **Run**. Poi fai lo stesso, ognuno in una nuova query, con [`supabase/002_elenco_condomini.sql`](supabase/002_elenco_condomini.sql), [`supabase/003_sicurezza_funzioni.sql`](supabase/003_sicurezza_funzioni.sql) e [`supabase/004_data_documenti.sql`](supabase/004_data_documenti.sql). Gli script vanno eseguiti in ordine, una volta sola.
 3. Controlla che in **Table Editor** compaiano `profiles`, `announcements`, `documents`, `polls`, `poll_options` e `votes`, e che in **Storage** ci sia il bucket `documenti`.
 
 ### 3. Configura l'autenticazione

@@ -13,6 +13,17 @@ export function fmtDate(value) {
   return new Date(value).toLocaleString('it-IT', { dateStyle: 'medium', timeStyle: 'short' });
 }
 
+// Date senza orario ("2026-10-01"): lette come data locale, senza fuso orario
+export function fmtDay(isoDate) {
+  const [y, m, d] = isoDate.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('it-IT', { dateStyle: 'medium' });
+}
+
+export function todayISO() {
+  const now = new Date();
+  return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
+
 export function fmtSize(bytes) {
   if (bytes == null) return '';
   if (bytes < 1024) return `${bytes} B`;

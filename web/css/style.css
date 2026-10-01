@@ -122,6 +122,10 @@ td, th { padding: 8px 6px; border-top: 1px solid var(--border); text-align: left
 tr:first-child td, th { border-top: 0; }
 th { font-size: .85rem; color: var(--muted); font-weight: 500; }
 td.actions { text-align: right; white-space: nowrap; }
+.edit-doc { padding: 8px 0; }
+.edit-doc .row { margin-top: 0; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 600px) { .cols { grid-template-columns: 1fr; } }
 .people input, .people select { padding: 4px 6px; }
 
 .badge { font-size: .8rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); }
@@ -156,7 +160,7 @@ td.actions { text-align: right; white-space: nowrap; }
 #flash.error { background: var(--danger); color: #fff; }
 
 @media (max-width: 600px) {
-  .docs td:nth-child(2) { display: none; }
+  .docs td:nth-child(2) { font-size: .85rem; }
   .people, .people tbody, .people tr, .people td { display: block; }
   .people tr:first-child { display: none; }
   .people tr { border-top: 1px solid var(--border); padding: 8px 0; }
