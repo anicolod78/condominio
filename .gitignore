@@ -3,3 +3,6 @@ Thumbs.db
 .vscode/
 backup/
 *.dump
+
+# Dati personali dei condomini: non pubblicare
+supabase/dati_condomini.sql

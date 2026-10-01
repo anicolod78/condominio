@@ -1,4 +1,4 @@
-import { supabase, BUCKET } from '../supabase.js';
+import { supabase, BUCKET, MAX_FILE_MB, uploadToBucket, checkZip } from '../supabase.js';
 import { CATEGORIE_DOCUMENTI } from '../../config.js';
 import { esc, fmtDate, fmtDay, fmtSize, ensure, flash, bindForm, onEach } from '../ui.js';
 
@@ -27,7 +27,10 @@ export async function render(app, ctx) {
 
   onEach(app, '[data-download]', async (btn) => {
     const doc = findDoc(btn.dataset.download);
-    const data = ensure(await supabase.storage.from(BUCKET).createSignedUrl(doc.file_path, 60, { download: doc.file_name }));
+    const [path, name] = btn.dataset.kind === 'attachment'
+      ? [doc.attachment_path, doc.attachment_name]
+      : [doc.file_path, doc.file_name];
+    const data = ensure(await supabase.storage.from(BUCKET).createSignedUrl(path, 60, { download: name }));
     location.href = data.signedUrl;
   });
 
@@ -44,20 +47,43 @@ export async function render(app, ctx) {
   });
 
   app.querySelectorAll('form[data-doc]').forEach((form) => bindForm(form, async () => {
-    ensure(await supabase.from('documents').update({
+    const doc = findDoc(form.dataset.doc);
+    const changes = {
       title: form.title.value.trim(),
       category: form.category.value,
       document_date: form.document_date.value,
-    }).eq('id', form.dataset.doc));
+    };
+
+    // Allegati: un nuovo zip sostituisce quello attuale; la spunta lo rimuove
+    const attachment = form.attachment.files[0];
+    const removeAttachment = form.remove_attachment?.checked;
+    let newPath = null;
+    if (attachment) {
+      checkZip(attachment);
+      newPath = await uploadToBucket(attachment);
+      Object.assign(changes, { attachment_path: newPath, attachment_name: attachment.name, attachment_size: attachment.size });
+    } else if (removeAttachment) {
+      Object.assign(changes, { attachment_path: null, attachment_name: null, attachment_size: null });
+    }
+
+    const { error } = await supabase.from('documents').update(changes).eq('id', doc.id);
+    if (error) {
+      if (newPath) await supabase.storage.from(BUCKET).remove([newPath]);
+      throw error;
+    }
+    if (doc.attachment_path && (attachment || removeAttachment)) {
+      await supabase.storage.from(BUCKET).remove([doc.attachment_path]);
+    }
     flash('Documento aggiornato');
     await render(app, ctx);
   }));
 
   onEach(app, '[data-delete]', async (btn) => {
     const doc = findDoc(btn.dataset.delete);
-    if (!confirm(`Eliminare definitivamente "${doc.title}"?`)) return;
+    const extra = doc.attachment_path ? ' Verranno eliminati anche i suoi allegati.' : '';
+    if (!confirm(`Eliminare definitivamente "${doc.title}"?${extra}`)) return;
     ensure(await supabase.from('documents').delete().eq('id', doc.id));
-    ensure(await supabase.storage.from(BUCKET).remove([doc.file_path]));
+    ensure(await supabase.storage.from(BUCKET).remove([doc.file_path, doc.attachment_path].filter(Boolean)));
     flash('Documento eliminato');
     await render(app, ctx);
   });
@@ -75,14 +101,16 @@ function section(category, docs, isAdmin) {
 
 function viewRow(d, isAdmin) {
   return `
-    <tr id="view-${d.id}" data-text="${esc(`${d.title} ${d.file_name}`.toLowerCase())}">
+    <tr id="view-${d.id}" data-text="${esc(`${d.title} ${d.file_name} ${d.attachment_name ?? ''}`.toLowerCase())}">
       <td>
         <strong>${esc(d.title)}</strong><br>
         <span class="muted small">${esc(d.file_name)} · ${fmtSize(d.size_bytes)}</span>
+        ${d.attachment_path ? `<br><span class="muted small">📎 Allegati: ${esc(d.attachment_name)} · ${fmtSize(d.attachment_size)}</span>` : ''}
       </td>
       <td class="nowrap" title="Caricato il ${esc(fmtDate(d.created_at))}">${fmtDay(d.document_date)}</td>
       <td class="actions">
         <button data-download="${d.id}">Scarica</button>
+        ${d.attachment_path ? `<button class="secondary" data-download="${d.id}" data-kind="attachment">Allegati</button>` : ''}
         ${isAdmin ? `
           <button class="link" data-edit="${d.id}">Modifica</button>
           <button class="link danger" data-delete="${d.id}">Elimina</button>` : ''}
@@ -106,6 +134,15 @@ function editRow(d) {
             <label>Data di riferimento <input type="date" name="document_date" value="${esc(d.document_date)}" required></label>
           </div>
           <p class="muted small">File: ${esc(d.file_name)} · caricato il ${esc(fmtDate(d.created_at))}</p>
+          <fieldset class="attachments">
+            <legend>Allegati (file .zip)</legend>
+            ${d.attachment_path ? `
+              <p class="small">Attuali: <strong>${esc(d.attachment_name)}</strong> · ${fmtSize(d.attachment_size)}</p>
+              <label class="choice"><input type="checkbox" name="remove_attachment"> Rimuovi gli allegati attuali</label>` : ''}
+            <label>${d.attachment_path ? 'Sostituisci con un nuovo zip' : 'Aggiungi uno zip con gli allegati'} (max ${MAX_FILE_MB} MB)
+              <input type="file" name="attachment" accept=".zip,application/zip">
+            </label>
+          </fieldset>
           <div class="row">
             <button type="submit">Salva</button>
             <button type="button" class="link" data-cancel="${d.id}">Annulla</button>

@@ -1,6 +1,6 @@
-import { supabase, BUCKET } from '../../supabase.js';
+import { supabase, BUCKET, MAX_FILE_MB, uploadToBucket, checkZip } from '../../supabase.js';
 import { CATEGORIE_DOCUMENTI } from '../../../config.js';
-import { esc, ensure, flash, bindForm, todayISO } from '../../ui.js';
+import { esc, flash, bindForm, todayISO } from '../../ui.js';
 
 export async function render(panel) {
   panel.innerHTML = `
@@ -14,32 +14,45 @@ export async function render(panel) {
           </label>
           <label>Data di riferimento <input type="date" name="document_date" value="${todayISO()}" required></label>
         </div>
-        <label>File (max 25 MB) <input type="file" name="file" required></label>
+        <label>Documento (max ${MAX_FILE_MB} MB) <input type="file" name="file" required></label>
+        <label>Allegati in un file .zip (facoltativo, max ${MAX_FILE_MB} MB)
+          <input type="file" name="attachment" accept=".zip,application/zip">
+        </label>
         <button type="submit">Carica</button>
       </form>
     </section>
-    <p class="muted small">Titolo, categoria e data dei documenti già caricati si modificano dalla pagina
+    <p class="muted small">Titolo, categoria, data e allegati dei documenti già caricati si modificano dalla pagina
       <a href="#/documenti">Documenti</a>, con il pulsante <em>Modifica</em>.</p>`;
 
   bindForm(panel.querySelector('#f-documento'), async (form) => {
     const file = form.file.files[0];
-    const safeName = file.name.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w.-]+/g, '_');
-    const path = `${new Date().getFullYear()}/${crypto.randomUUID()}-${safeName}`;
+    const attachment = form.attachment.files[0];
+    if (attachment) checkZip(attachment);
 
-    ensure(await supabase.storage.from(BUCKET).upload(path, file));
-    const { error } = await supabase.from('documents').insert({
-      title: form.title.value.trim(),
-      category: form.category.value,
-      document_date: form.document_date.value,
-      file_path: path,
-      file_name: file.name,
-      size_bytes: file.size,
-    });
-    if (error) {
-      await supabase.storage.from(BUCKET).remove([path]);
-      throw error;
+    const uploaded = [];
+    try {
+      const path = await uploadToBucket(file);
+      uploaded.push(path);
+      const attachmentPath = attachment ? await uploadToBucket(attachment) : null;
+      if (attachmentPath) uploaded.push(attachmentPath);
+
+      const { error } = await supabase.from('documents').insert({
+        title: form.title.value.trim(),
+        category: form.category.value,
+        document_date: form.document_date.value,
+        file_path: path,
+        file_name: file.name,
+        size_bytes: file.size,
+        attachment_path: attachmentPath,
+        attachment_name: attachment?.name ?? null,
+        attachment_size: attachment?.size ?? null,
+      });
+      if (error) throw error;
+    } catch (err) {
+      if (uploaded.length) await supabase.storage.from(BUCKET).remove(uploaded);
+      throw err;
     }
     form.reset();
-    flash('Documento caricato');
+    flash(attachment ? 'Documento e allegati caricati' : 'Documento caricato');
   });
 }

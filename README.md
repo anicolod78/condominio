@@ -1,6 +1,6 @@
 # Portale Condominio
 
-Piccolo portale riservato ai condomini: **bacheca avvisi**, **archivio documenti**, **sondaggi** ed **elenco condomini**.
+Piccolo portale riservato ai condomini: **bacheca avvisi**, **archivio documenti** (con eventuali allegati in un file zip), **sondaggi** ed **elenco condomini**.
 
 - **Frontend**: HTML e JavaScript statici in `web/`, pubblicati su **GitHub Pages**. Nessuna build.
 - **Backend**: **Supabase** (piano gratuito) per login via email, database Postgres e archivio file.
@@ -13,7 +13,8 @@ condominio/
 │   ├── 002_elenco_condomini.sql elenco condomini e profilo personale
 │   ├── 003_sicurezza_funzioni.sql correzioni del Security Advisor
 │   ├── 004_data_documenti.sql   data di riferimento dei documenti
-│   └── 005_anagrafica_millesimi.sql anagrafica condomini e millesimi
+│   ├── 005_anagrafica_millesimi.sql anagrafica condomini e millesimi
+│   └── 006_allegati_documenti.sql allegati zip dei documenti
 ├── web/                         sito pubblicato su GitHub Pages
 │   ├── config.js                ← URL e chiave pubblica Supabase
 │   ├── index.html
@@ -51,7 +52,7 @@ I voti sono riservati: ognuno vede solo il proprio. I risultati complessivi comp
 
 ### 2. Crea il database
 1. Menu **SQL Editor** → **New query**.
-2. Incolla tutto il contenuto di [`supabase/schema.sql`](supabase/schema.sql) e premi **Run**. Poi fai lo stesso, ognuno in una nuova query, con [`supabase/002_elenco_condomini.sql`](supabase/002_elenco_condomini.sql), [`supabase/003_sicurezza_funzioni.sql`](supabase/003_sicurezza_funzioni.sql), [`supabase/004_data_documenti.sql`](supabase/004_data_documenti.sql) e [`supabase/005_anagrafica_millesimi.sql`](supabase/005_anagrafica_millesimi.sql). Gli script vanno eseguiti in ordine, una volta sola.
+2. Incolla tutto il contenuto di [`supabase/schema.sql`](supabase/schema.sql) e premi **Run**. Poi fai lo stesso, ognuno in una nuova query, con [`supabase/002_elenco_condomini.sql`](supabase/002_elenco_condomini.sql), [`supabase/003_sicurezza_funzioni.sql`](supabase/003_sicurezza_funzioni.sql), [`supabase/004_data_documenti.sql`](supabase/004_data_documenti.sql), [`supabase/005_anagrafica_millesimi.sql`](supabase/005_anagrafica_millesimi.sql) e [`supabase/006_allegati_documenti.sql`](supabase/006_allegati_documenti.sql). Gli script vanno eseguiti in ordine, una volta sola.
 3. Controlla che in **Table Editor** compaiano `profiles`, `announcements`, `documents`, `polls`, `poll_options` e `votes`, e che in **Storage** ci sia il bucket `documenti`.
 
 ### 3. Configura l'autenticazione
@@ -155,7 +156,7 @@ Poi apri <http://localhost:8000/>. Non aprire `index.html` con doppio clic: i mo
 - **Backup**: il piano gratuito non include backup scaricabili. Ogni tanto esporta i dati:
   - tabelle: **Table Editor → Export to CSV**, oppure `pg_dump` con la stringa di connessione indicata in *Connect*;
   - file: conserva una copia locale dei documenti che carichi.
-- **Limiti del piano gratuito** (indicativi): 500 MB di database, 1 GB di file, 50.000 utenti attivi al mese. Più che sufficienti per un condominio.
+- **Limiti del piano gratuito** (indicativi): 500 MB di database, 1 GB di file in tutto (massimo 50 MB per singolo file, zip compresi), 50.000 utenti attivi al mese. Più che sufficienti per un condominio.
 - **Aggiornamenti del sito**: ogni `git push` su `main` che tocca `web/` ripubblica il sito in automatico.
 
 ## Privacy (GDPR) — promemoria
