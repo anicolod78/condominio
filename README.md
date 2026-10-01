@@ -12,7 +12,8 @@ condominio/
 │   ├── schema.sql               tabelle, permessi (RLS), bucket file
 │   ├── 002_elenco_condomini.sql elenco condomini e profilo personale
 │   ├── 003_sicurezza_funzioni.sql correzioni del Security Advisor
-│   └── 004_data_documenti.sql   data di riferimento dei documenti
+│   ├── 004_data_documenti.sql   data di riferimento dei documenti
+│   └── 005_anagrafica_millesimi.sql anagrafica condomini e millesimi
 ├── web/                         sito pubblicato su GitHub Pages
 │   ├── config.js                ← URL e chiave pubblica Supabase
 │   ├── index.html
@@ -28,12 +29,14 @@ condominio/
 |---|---|---|
 | Leggere avvisi e scaricare documenti | ✔ | ✔ |
 | Votare (e cambiare voto finché il sondaggio è aperto) | ✔ | ✔ |
-| Vedere l'elenco condomini (nome e unità) | ✔ | ✔ |
-| Modificare il proprio nome e telefono e scegliere se mostrare i contatti | ✔ | ✔ |
+| Vedere l'elenco condomini (nome, unità e millesimi) | ✔ | ✔ |
+| Modificare il proprio telefono e scegliere se mostrare i contatti | ✔ | ✔ |
 | Pubblicare avvisi, caricare documenti, creare e chiudere sondaggi | | ✔ |
-| Gestire nome, unità e ruolo dei condomini | | ✔ |
+| Gestire l'anagrafica (anche senza email), i millesimi, gli inviti e i ruoli | | ✔ |
 
 Nell'elenco condomini email e telefono sono visibili agli altri solo se la persona lo sceglie dal proprio profilo. Il consenso è disattivato per impostazione predefinita.
+
+**Anagrafica e millesimi.** L'elenco dei condomini è indipendente dagli account: una scheda può esistere senza email e senza accesso al portale. Quando qualcuno accetta un invito, il suo account si collega alla scheda con la stessa email. Nei sondaggi, a ogni opzione si sommano i millesimi delle schede di chi l'ha votata. Le percentuali sono calcolate sul totale dei millesimi in anagrafica. Chi ha accesso al portale ma 0 millesimi (es. un familiare) conta nel numero dei voti, non nei millesimi.
 
 I voti sono riservati: ognuno vede solo il proprio. I risultati complessivi compaiono dopo aver votato o alla chiusura del sondaggio. Anche l'admin vede solo i totali.
 
@@ -48,7 +51,7 @@ I voti sono riservati: ognuno vede solo il proprio. I risultati complessivi comp
 
 ### 2. Crea il database
 1. Menu **SQL Editor** → **New query**.
-2. Incolla tutto il contenuto di [`supabase/schema.sql`](supabase/schema.sql) e premi **Run**. Poi fai lo stesso, ognuno in una nuova query, con [`supabase/002_elenco_condomini.sql`](supabase/002_elenco_condomini.sql), [`supabase/003_sicurezza_funzioni.sql`](supabase/003_sicurezza_funzioni.sql) e [`supabase/004_data_documenti.sql`](supabase/004_data_documenti.sql). Gli script vanno eseguiti in ordine, una volta sola.
+2. Incolla tutto il contenuto di [`supabase/schema.sql`](supabase/schema.sql) e premi **Run**. Poi fai lo stesso, ognuno in una nuova query, con [`supabase/002_elenco_condomini.sql`](supabase/002_elenco_condomini.sql), [`supabase/003_sicurezza_funzioni.sql`](supabase/003_sicurezza_funzioni.sql), [`supabase/004_data_documenti.sql`](supabase/004_data_documenti.sql) e [`supabase/005_anagrafica_millesimi.sql`](supabase/005_anagrafica_millesimi.sql). Gli script vanno eseguiti in ordine, una volta sola.
 3. Controlla che in **Table Editor** compaiano `profiles`, `announcements`, `documents`, `polls`, `poll_options` e `votes`, e che in **Storage** ci sia il bucket `documenti`.
 
 ### 3. Configura l'autenticazione
@@ -124,7 +127,11 @@ Funziona per chi ha un account Google (Gmail o Google Workspace) **con lo stesso
 Nota: nella schermata di consenso Google comparirà l'indirizzo `TUO-PROGETTO.supabase.co`. Per mostrare un dominio personalizzato serve un piano Supabase a pagamento.
 
 ### 10. Invita i condomini
-- Dal portale: **Gestione → Condomini → Invita un condomino** (email e, se vuoi, nome e unità). In alternativa: **Authentication → Users → Add user → Send invitation**.
+- Dal portale, in **Gestione → Condomini**:
+  - aggiungi le schede di tutti i condomini con nome, unità e **millesimi**. L'email è facoltativa;
+  - per chi ha un'email premi **Invita**, oppure spunta "Invia subito l'invito" quando crei la scheda.
+- In alternativa: **Authentication → Users → Add user → Send invitation**. Se esiste già una scheda con la stessa email, l'account si collega a quella; altrimenti ne viene creata una nuova.
+- Controlla che il totale dei millesimi sia 1000: la pagina lo segnala se non torna.
 - Dallo stesso elenco puoi correggere nome, unità e ruolo, oppure **Rimuovere** chi lascia il condominio.
 - Agli accessi successivi, dalla pagina di login si può:
   - premere **Accedi con Google**;
@@ -154,7 +161,7 @@ Poi apri <http://localhost:8000/>. Non aprire `index.html` con doppio clic: i mo
 ## Privacy (GDPR) — promemoria
 - Il portale tratta dati personali (email, nomi, unità, documenti). Aggiungi un'informativa essenziale: chi è il titolare, quali dati, per quale finalità, per quanto tempo.
 - Carica solo documenti destinati a tutti i condomini. Evita, o anonimizza, quelli con dati di singole persone (morosità, contenziosi, dati sanitari).
-- Quando qualcuno vende o lascia l'appartamento, rimuovilo da **Gestione → Condomini** (oppure da **Authentication → Users**). Profilo e voti vengono rimossi di conseguenza.
+- Quando qualcuno vende o lascia l'appartamento, vai in **Gestione → Condomini**. Usa **Revoca accesso** per togliere l'accesso al portale lasciando la scheda, oppure **Elimina** per cancellare anche la scheda. In entrambi i casi i suoi voti vengono cancellati.
 - I sondaggi sono **consultivi** e non sostituiscono le delibere dell'assemblea.
 
 ## Modelli email in italiano

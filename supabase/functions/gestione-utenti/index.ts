@@ -44,9 +44,17 @@ Deno.serve(async (req) => {
 
   const body = await req.json().catch(() => ({}));
 
+  // Invita la persona di una scheda dell'anagrafica, usando la sua email
   if (body.action === 'invite') {
-    const email = String(body.email ?? '').trim().toLowerCase();
-    if (!EMAIL.test(email)) return json({ error: 'Indirizzo email non valido' }, 400);
+    const { data: resident } = await admin.from('residents')
+      .select('id, email, user_id')
+      .eq('id', body.resident_id)
+      .maybeSingle();
+    if (!resident) return json({ error: 'Condomino non trovato' }, 404);
+    if (resident.user_id) return json({ error: 'Questo condomino ha già accesso al portale' }, 400);
+
+    const email = String(resident.email ?? '').trim().toLowerCase();
+    if (!EMAIL.test(email)) return json({ error: 'Inserisci prima un indirizzo email valido nella scheda' }, 400);
 
     const { data, error } = await admin.auth.admin.inviteUserByEmail(email, { redirectTo: body.redirectTo });
     if (error) {
@@ -54,13 +62,12 @@ Deno.serve(async (req) => {
       return json({ error: exists ? 'Questo indirizzo è già registrato' : error.message }, 400);
     }
 
-    // Il profilo è già stato creato dal trigger: si completano nome e unità
-    await admin.from('profiles')
-      .update({ full_name: body.full_name?.trim() || null, unit: body.unit?.trim() || null })
-      .eq('id', data.user.id);
+    // Di norma il trigger collega già la scheda tramite l'email: questo è un ulteriore controllo
+    await admin.from('residents').update({ user_id: data.user.id }).eq('id', resident.id).is('user_id', null);
     return json({ ok: true });
   }
 
+  // Revoca l'accesso: l'account viene eliminato, la scheda in anagrafica resta
   if (body.action === 'delete') {
     if (!body.user_id) return json({ error: 'Utente non indicato' }, 400);
     if (body.user_id === user.id) return json({ error: 'Non puoi rimuovere te stesso' }, 400);

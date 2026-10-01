@@ -1,5 +1,5 @@
 import { supabase } from '../supabase.js';
-import { esc, nl2br, fmtDate, ensure, flash, bindForm, onEach } from '../ui.js';
+import { esc, nl2br, fmtDate, fmtMillesimi, ensure, flash, bindForm, onEach } from '../ui.js';
 
 const isOpen = (poll) => !poll.closes_at || new Date(poll.closes_at) > new Date();
 
@@ -84,20 +84,36 @@ function voteForm(poll, options, myOption) {
 }
 
 function resultsView(options, results, myOption) {
-  const counts = new Map(results.map((r) => [r.option_id, Number(r.votes)]));
-  const total = [...counts.values()].reduce((a, b) => a + b, 0);
+  const byOption = new Map(results.map((r) => [r.option_id, { votes: Number(r.votes), millesimi: Number(r.millesimi) }]));
+  const condoTotal = Number(results[0]?.total_millesimi ?? 0);
+  const votes = [...byOption.values()].reduce((a, r) => a + r.votes, 0);
+  const votedMillesimi = [...byOption.values()].reduce((a, r) => a + r.millesimi, 0);
+  const share = (value, total) => (total ? Math.round((value / total) * 1000) / 10 : 0);
+  const pctText = (value) => `${value.toLocaleString('it-IT')}%`;
+
+  // Le barre mostrano la quota sul totale dei millesimi; se i millesimi
+  // non sono ancora stati inseriti, la quota sul numero di voti
+  const useMillesimi = condoTotal > 0;
+
   return `
     <div class="results">
-      <h3>Risultati <span class="muted small">(${total} vot${total === 1 ? 'o' : 'i'})</span></h3>
+      <h3>Risultati</h3>
+      <p class="muted small">
+        ${votes} vot${votes === 1 ? 'o' : 'i'}
+        ${useMillesimi ? `· ${fmtMillesimi(votedMillesimi)} millesimi su ${fmtMillesimi(condoTotal)} (${pctText(share(votedMillesimi, condoTotal))})` : ''}
+      </p>
       ${options.map((o) => {
-        const n = counts.get(o.id) ?? 0;
-        const pct = total ? Math.round((n / total) * 100) : 0;
+        const r = byOption.get(o.id) ?? { votes: 0, millesimi: 0 };
+        const pct = useMillesimi ? share(r.millesimi, condoTotal) : share(r.votes, votes);
         return `
           <div class="bar-row">
             <span>${esc(o.label)}${o.id === myOption ? ' <em class="muted small">(tuo voto)</em>' : ''}</span>
-            <span class="muted small">${n} · ${pct}%</span>
+            <span class="muted small">
+              ${r.votes} vot${r.votes === 1 ? 'o' : 'i'}${useMillesimi ? ` · <strong>${fmtMillesimi(r.millesimi)} ‰</strong>` : ''} · ${pctText(pct)}
+            </span>
             <div class="bar"><div style="width:${pct}%"></div></div>
           </div>`;
       }).join('')}
+      ${useMillesimi ? '<p class="muted small">Le percentuali sono calcolate sul totale dei millesimi del condominio.</p>' : ''}
     </div>`;
 }

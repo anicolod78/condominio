@@ -24,6 +24,10 @@ export function todayISO() {
   return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 }
 
+export function fmtMillesimi(value) {
+  return Number(value ?? 0).toLocaleString('it-IT', { maximumFractionDigits: 3 });
+}
+
 export function fmtSize(bytes) {
   if (bytes == null) return '';
   if (bytes < 1024) return `${bytes} B`;
