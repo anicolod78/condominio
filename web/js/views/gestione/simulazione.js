@@ -45,6 +45,7 @@ export async function render(panel, pollId) {
           <button type="button" class="link danger" id="sim-reset">Azzera simulazione</button>
         </div>
       </div>
+      <div id="sim-tally" class="sim-tally" aria-live="polite"></div>
       <table class="sim">
         <tr><th>Unità</th><th>Condomino</th><th class="num">Millesimi</th><th>Risposta</th></tr>
         ${residents.map((r) => `
@@ -58,7 +59,11 @@ export async function render(panel, pollId) {
     </section>`;
 
   const summary = panel.querySelector('#sim-summary');
-  const updateSummary = () => { summary.innerHTML = summaryView(options, residents, choices); };
+  const tally = panel.querySelector('#sim-tally');
+  const updateSummary = () => {
+    summary.innerHTML = summaryView(options, residents, choices);
+    tally.innerHTML = tallyView(options, residents, choices);
+  };
   updateSummary();
 
   panel.querySelector('#sim-search').addEventListener('input', (e) => {
@@ -112,6 +117,20 @@ export async function render(panel, pollId) {
     flash('Simulazione azzerata');
     await render(panel, pollId);
   }));
+}
+
+// Riepilogo compatto che resta in vista mentre si scorre l'elenco (utile su smartphone)
+function tallyView(options, residents, choices) {
+  const sums = new Map(options.map((o) => [o.id, 0]));
+  let none = 0;
+  for (const r of residents) {
+    const id = choices.get(r.id);
+    if (sums.has(id)) sums.set(id, sums.get(id) + Number(r.millesimi)); else none += Number(r.millesimi);
+  }
+  return [
+    ...options.map((o) => `<span><strong>${esc(o.label)}</strong> ${fmtMillesimi(sums.get(o.id))}‰</span>`),
+    `<span class="muted">Senza risposta ${fmtMillesimi(none)}‰</span>`,
+  ].join('');
 }
 
 function summaryView(options, residents, choices) {

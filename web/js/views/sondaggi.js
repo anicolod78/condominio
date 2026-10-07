@@ -76,7 +76,7 @@ function voteForm(poll, options, myOption) {
   return `
     <form data-poll="${poll.id}" class="stack">
       ${options.map((o) => `
-        <label class="choice">
+        <label class="choice option">
           <input type="radio" name="option" value="${o.id}" ${o.id === myOption ? 'checked' : ''}>
           ${esc(o.label)}
         </label>`).join('')}

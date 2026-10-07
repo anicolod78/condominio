@@ -34,7 +34,7 @@ export async function render(panel, ctx) {
       ${polls.length ? `
         <p class="muted small">Con la simulazione indichi una risposta per ogni condomino in anagrafica,
           anche se non è ancora iscritto al portale, e vedi i risultati in millesimi.</p>
-        <table>
+        <table class="poll-list">
           ${polls.map((p) => `
             <tr>
               <td><strong>${esc(p.question)}</strong><br>

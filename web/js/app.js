@@ -12,7 +12,9 @@ const routes = { '': bacheca, documenti, sondaggi, condomini, gestione };
 
 const app = document.getElementById('app');
 const nav = document.getElementById('nav');
+const logout = document.getElementById('logout');
 let profile = null;
+let lastHash = null;
 
 document.title = NOME_CONDOMINIO;
 document.getElementById('brand').textContent = NOME_CONDOMINIO;
@@ -31,6 +33,8 @@ async function render() {
   if (!session) {
     profile = null;
     nav.hidden = true;
+    logout.hidden = true;
+    document.body.classList.remove('signed-in');
     login.render(app);
     return;
   }
@@ -45,12 +49,16 @@ async function render() {
   if (view === gestione && !isAdmin) view = bacheca;
 
   nav.hidden = false;
+  logout.hidden = false;
+  document.body.classList.add('signed-in');
   document.getElementById('nav-admin').hidden = !isAdmin;
   for (const link of nav.querySelectorAll('a')) {
     link.classList.toggle('active', link.getAttribute('href') === `#/${route}`);
   }
 
   app.innerHTML = '<p class="muted">Caricamento…</p>';
+  if (location.hash !== lastHash) window.scrollTo(0, 0); // nuova pagina: si riparte dall'alto
+  lastHash = location.hash;
   await view.render(app, { profile, isAdmin, sub, args });
 }
 
@@ -70,7 +78,7 @@ if (!isConfigured) {
 } else {
   window.addEventListener('hashchange', safeRender);
 
-  document.getElementById('logout').addEventListener('click', guarded(async () => {
+  logout.addEventListener('click', guarded(async () => {
     ensure(await supabase.auth.signOut());
     location.hash = '#/';
   }));

@@ -49,9 +49,10 @@ body {
   border-bottom: 1px solid var(--border);
 }
 .brand { font-weight: 700; font-size: 1.15rem; color: var(--text); text-decoration: none; }
-nav { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+nav { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-left: auto; }
 nav a { padding: 6px 10px; border-radius: 6px; color: var(--text); text-decoration: none; }
 nav a.active, nav a:hover { background: var(--bg); color: var(--accent); }
+nav svg { display: none; width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
 main { max-width: 860px; margin: 0 auto; padding: 16px; }
 h1 { font-size: 1.6rem; margin: 8px 0 16px; }
@@ -83,9 +84,19 @@ input, select, textarea {
   padding: 8px 10px;
   width: 100%;
 }
-input[type=checkbox], input[type=radio] { width: auto; }
+input[type=checkbox], input[type=radio] { width: 20px; height: 20px; margin: 0; flex: none; accent-color: var(--accent); }
+
+/* Scelte dei sondaggi: tutta la riga è cliccabile */
+label.option { padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
+label.option:has(input:checked) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+
+details.profile summary { cursor: pointer; display: flex; flex-direction: column; gap: 2px; list-style: none; }
+details.profile summary::-webkit-details-marker { display: none; }
+details.profile summary strong::after { content: " ▾"; color: var(--muted); font-weight: 400; }
+details.profile[open] summary strong::after { content: " ▴"; }
+details.profile[open] summary { margin-bottom: 12px; }
 #doc-search, #people-search { margin-bottom: 16px; }
-.directory a { color: var(--accent); text-decoration: none; word-break: break-all; }
+.directory a { color: var(--accent); text-decoration: none; overflow-wrap: anywhere; }
 
 button {
   font: inherit;
@@ -114,6 +125,21 @@ a.button-link:hover { background: var(--bg); }
 .sim-bulk { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .sim-bulk select { width: auto; }
 .sim select { padding: 4px 6px; min-width: 160px; }
+.sim-tally {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: .85rem;
+  font-variant-numeric: tabular-nums;
+}
 .muted-row { opacity: .7; }
 .muted-row .bar > div { background: var(--muted); }
 
@@ -209,10 +235,97 @@ a { color: var(--accent); }
 #flash.show { opacity: 1; }
 #flash.error { background: var(--danger); color: #fff; }
 
-@media (max-width: 600px) {
-  .docs td:nth-child(2) { font-size: .85rem; }
-  .registry, .registry tbody, .registry tr, .registry td { display: block; }
-  .registry tr:first-child { display: none; }
-  .registry tr { border-top: 1px solid var(--border); padding: 8px 0; }
-  .registry td { border: 0; padding: 2px 0; text-align: left; }
+/* ============================== Smartphone ============================== */
+@media (max-width: 640px) {
+  /* Intestazione compatta e fissa; menu come barra in basso */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    flex-wrap: nowrap;
+    padding: 10px 16px;
+    padding-top: max(10px, env(safe-area-inset-top));
+  }
+  .brand { font-size: 1.05rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #logout { min-height: 0; padding: 6px 8px; }
+
+  nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    flex-wrap: nowrap;
+    gap: 0;
+    margin: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 4px 4px calc(4px + env(safe-area-inset-bottom));
+  }
+  nav a {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 2px;
+    font-size: .7rem;
+    color: var(--muted);
+  }
+  nav a.active, nav a:hover { background: none; color: var(--accent); }
+  nav svg { display: block; }
+  body.signed-in main { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+  body.signed-in #flash { bottom: calc(84px + env(safe-area-inset-bottom)); }
+
+  main { padding: 12px; }
+  h1 { font-size: 1.35rem; margin: 4px 0 12px; }
+  .card { padding: 14px; margin-bottom: 12px; }
+  .card.narrow { margin: 16px auto; }
+  .sim-tally { top: 52px; }
+
+  /* Pulsanti comodi da toccare */
+  button, a.button-link { min-height: 44px; }
+  a.button-link { display: inline-flex; align-items: center; }
+  button.link { padding: 10px 8px; }
+  .stack > button[type=submit] { align-self: stretch; }
+  .row, td.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+
+  .bar-row { grid-template-columns: 1fr; }
+  .sim-bulk select { flex: 1 1 100%; width: 100%; }
+
+  /* Tabelle trasformate in schede */
+  .docs, .directory, .registry, .sim, .poll-list,
+  .docs tbody, .directory tbody, .registry tbody, .sim tbody, .poll-list tbody { display: block; }
+  .docs tr, .directory tr, .registry tr, .sim tr, .poll-list tr {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 12px;
+    align-items: center;
+    padding: 12px 0;
+    border-top: 1px solid var(--border);
+  }
+  .docs tr:first-child, .poll-list tr:first-child, tr:has(> th) + tr { border-top: 0; }
+  tr:has(> th) { display: none !important; }
+  .docs td, .directory td, .registry td, .sim td, .poll-list td { display: block; border: 0; padding: 0; text-align: left; }
+  td:empty { display: none; }
+  td[colspan], td.actions { grid-column: 1 / -1; }
+  td.actions { margin-top: 6px; }
+  .directory td.num::after, .registry td.num::after, .sim td.num::after { content: " ‰"; }
+
+  /* Documenti: titolo, data, pulsanti uno sotto l'altro */
+  .docs tr { grid-template-columns: 1fr; }
+  .docs td:nth-child(2) { font-size: .85rem; color: var(--muted); }
+
+  /* Elenco, anagrafica e simulazione: nome e millesimi in alto, poi il resto */
+  .directory td:nth-child(2), .registry td:nth-child(2), .sim td:nth-child(2) { order: 1; font-weight: 500; }
+  .directory td.num, .registry td.num, .sim td.num { order: 2; }
+  .directory td:nth-child(1), .registry td:nth-child(1), .sim td:nth-child(1) { order: 3; font-size: .85rem; color: var(--muted); }
+  .registry td:nth-child(4) { order: 4; justify-self: end; }
+  .directory td:nth-child(4) { order: 4; grid-column: 1 / -1; }
+  .registry td.actions { order: 5; }
+  .sim td:nth-child(4) { order: 4; grid-column: 1 / -1; margin-top: 6px; }
+  .sim td:nth-child(1) { grid-column: 1 / -1; }
+  .sim select { width: 100%; min-height: 44px; }
+  .directory tr.total { padding-top: 10px; border-top: 2px solid var(--border); }
 }

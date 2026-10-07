@@ -12,8 +12,12 @@ export async function render(app, ctx) {
     <h1>Condomini</h1>
 
     ${mine ? `
-    <section class="card">
-      <h2>Il mio profilo</h2>
+    <details class="card profile">
+      <summary>
+        <strong>Il mio profilo</strong>
+        <span class="muted small">${esc(mine.unit ?? 'Unità non indicata')} · ${fmtMillesimi(mine.millesimi)} millesimi ·
+          contatti ${mine.share_contacts ? 'visibili' : 'riservati'}</span>
+      </summary>
       <p>${esc(mine.full_name)} · Unità <strong>${esc(mine.unit ?? 'non indicata')}</strong> · ${fmtMillesimi(mine.millesimi)} millesimi</p>
       <form id="f-profilo" class="stack">
         <label>Telefono <input name="phone" type="tel" value="${esc(mine.phone)}" maxlength="40"></label>
@@ -24,7 +28,7 @@ export async function render(app, ctx) {
         <p class="muted small">Nome, unità e millesimi sono gestiti dall'amministratore del portale: contattalo per eventuali correzioni.</p>
         <button type="submit">Salva</button>
       </form>
-    </section>` : ''}
+    </details>` : ''}
 
     <section class="card">
       <h2>Elenco (${people.length})</h2>
