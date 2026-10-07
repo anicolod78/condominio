@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Sfondo a tutta superficie: Android ritaglia l'icona nella forma del launcher -->
+  <rect width="512" height="512" fill="#2f6fdf"/>
+  <g fill="#fff">
+    <polygon points="132,178 256,104 380,178"/>
+    <rect x="156" y="170" width="200" height="222"/>
+    <rect x="124" y="388" width="264" height="18" rx="9"/>
+  </g>
+  <g fill="#2f6fdf">
+    <rect x="182" y="198" width="38" height="38" rx="4"/>
+    <rect x="237" y="198" width="38" height="38" rx="4"/>
+    <rect x="292" y="198" width="38" height="38" rx="4"/>
+    <rect x="182" y="254" width="38" height="38" rx="4"/>
+    <rect x="237" y="254" width="38" height="38" rx="4"/>
+    <rect x="292" y="254" width="38" height="38" rx="4"/>
+    <rect x="182" y="310" width="38" height="38" rx="4"/>
+    <rect x="292" y="310" width="38" height="38" rx="4"/>
+    <rect x="234" y="326" width="44" height="66" rx="4"/>
+  </g>
+</svg>

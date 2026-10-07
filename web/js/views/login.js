@@ -3,6 +3,9 @@ import { esc, bindForm, guarded } from '../ui.js';
 
 const redirectTo = () => location.origin + location.pathname;
 
+// Portale aperto come app installata (icona sulla schermata Home)
+const isInstalledApp = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
 // Gli errori di accesso (link scaduto, account Google non invitato...)
 // tornano nell'URL come "#error_description=..." o "?error_description=..."
 function readAuthError() {
@@ -18,12 +21,15 @@ function readAuthError() {
 
 export function render(app) {
   const authError = readAuthError();
+  const installed = isInstalledApp();
 
   app.innerHTML = `
     <section class="card narrow">
       <h1>Accesso riservato</h1>
       <p>Il portale è riservato ai condomini registrati.</p>
       ${authError ? `<p class="error">${esc(authError)}</p>` : ''}
+      ${installed ? `<p class="hint small">Stai usando l'app: per entrare usa il <strong>codice</strong> che ricevi via email.
+        Il link dell'email si aprirebbe nel browser, non nell'app.</p>` : ''}
 
       <button type="button" id="google" class="google">
         <svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true">
@@ -39,7 +45,7 @@ export function render(app) {
 
       <form id="email-form" class="stack">
         <label>Email <input type="email" name="email" required autocomplete="email"></label>
-        <button type="submit">Inviami link e codice di accesso</button>
+        <button type="submit">${installed ? 'Inviami il codice di accesso' : 'Inviami link e codice di accesso'}</button>
       </form>
 
       <form id="code-form" class="stack" hidden>
@@ -82,7 +88,9 @@ export function render(app) {
       return;
     }
     app.querySelector('#sent-msg').textContent =
-      `Ti abbiamo inviato un'email a ${email}: apri il link oppure inserisci qui il codice.`;
+      installed
+        ? `Ti abbiamo inviato un'email a ${email}: inserisci qui il codice che contiene.`
+        : `Ti abbiamo inviato un'email a ${email}: apri il link oppure inserisci qui il codice.`;
     emailForm.hidden = true;
     codeForm.hidden = false;
     codeForm.code.focus();

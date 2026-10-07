@@ -329,3 +329,10 @@ a { color: var(--accent); }
   .sim select { width: 100%; min-height: 44px; }
   .directory tr.total { padding-top: 10px; border-top: 2px solid var(--border); }
 }
+
+.hint {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+}

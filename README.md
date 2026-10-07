@@ -153,6 +153,17 @@ Poi apri <http://localhost:8000/>. Non aprire `index.html` con doppio clic: i mo
 
 ---
 
+## Installare il portale come app sul telefono
+
+Il portale si può aggiungere alla schermata Home: si apre a schermo intero, senza barra del browser, con l'icona del condominio.
+
+- **iPhone (Safari)**: apri il portale, tocca **Condividi** (il quadrato con la freccia), poi **Aggiungi alla schermata Home**.
+- **Android (Chrome)**: apri il portale, tocca il menu **⋮** e poi **Installa app** (o **Aggiungi a schermata Home**). A volte Chrome propone da solo l'installazione.
+
+**Primo accesso nell'app:** su iPhone l'app installata non condivide la sessione con Safari. Per entrare, chiedi il codice via email e **inseriscilo nell'app**, invece di toccare il link nell'email, che si aprirebbe in Safari. La pagina di accesso lo ricorda quando il portale è aperto come app. Dopo il primo accesso la sessione resta attiva.
+
+Nome e icona dell'app sono in [`web/manifest.webmanifest`](web/manifest.webmanifest) e nella cartella [`web/icons/`](web/icons/). Se cambi `NOME_CONDOMINIO` in `config.js`, aggiorna anche `name` nel manifest.
+
 ## Manutenzione
 
 - **Pausa del progetto gratuito**: Supabase mette in pausa i progetti gratuiti dopo 7 giorni senza richieste. Il workflow `keepalive.yml` lo evita chiamando il database ogni 3 giorni. GitHub però disattiva i workflow pianificati dopo 60 giorni senza commit: se ricevi l'avviso, riattivalo da **Actions**. Se il progetto va comunque in pausa, lo riattivi con **Restore** dalla dashboard Supabase.

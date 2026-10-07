@@ -92,3 +92,10 @@ if (!isConfigured) {
     setTimeout(safeRender, 0); // mai chiamare Supabase dentro questo callback
   });
 }
+
+// Service worker: rende il portale installabile come app sul telefono
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch((err) => console.warn('Service worker non registrato', err));
+  });
+}
