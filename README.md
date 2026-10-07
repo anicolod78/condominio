@@ -14,7 +14,8 @@ condominio/
 │   ├── 003_sicurezza_funzioni.sql correzioni del Security Advisor
 │   ├── 004_data_documenti.sql   data di riferimento dei documenti
 │   ├── 005_anagrafica_millesimi.sql anagrafica condomini e millesimi
-│   └── 006_allegati_documenti.sql allegati zip dei documenti
+│   ├── 006_allegati_documenti.sql allegati zip dei documenti
+│   └── 007_simulazione_sondaggi.sql simulazione dei sondaggi (solo admin)
 ├── web/                         sito pubblicato su GitHub Pages
 │   ├── config.js                ← URL e chiave pubblica Supabase
 │   ├── index.html
@@ -39,6 +40,8 @@ Nell'elenco condomini email e telefono sono visibili agli altri solo se la perso
 
 **Anagrafica e millesimi.** L'elenco dei condomini è indipendente dagli account: una scheda può esistere senza email e senza accesso al portale. Quando qualcuno accetta un invito, il suo account si collega alla scheda con la stessa email. Nei sondaggi, a ogni opzione si sommano i millesimi delle schede di chi l'ha votata. Le percentuali sono calcolate sul totale dei millesimi in anagrafica. Chi ha accesso al portale ma 0 millesimi (es. un familiare) conta nel numero dei voti, non nei millesimi.
 
+**Simulazione dei sondaggi (solo admin).** Da **Gestione → Sondaggi → Simulazione** (oppure dal pulsante *Simulazione* sotto ogni sondaggio) l'admin indica una risposta per ogni scheda dell'anagrafica, anche per chi non è iscritto al portale, e vede subito i risultati in schede e millesimi. Le risposte simulate restano salvate a parte, sono visibili solo agli admin e non modificano i voti reali.
+
 I voti sono riservati: ognuno vede solo il proprio. I risultati complessivi compaiono dopo aver votato o alla chiusura del sondaggio. Anche l'admin vede solo i totali.
 
 ---
@@ -52,7 +55,7 @@ I voti sono riservati: ognuno vede solo il proprio. I risultati complessivi comp
 
 ### 2. Crea il database
 1. Menu **SQL Editor** → **New query**.
-2. Incolla tutto il contenuto di [`supabase/schema.sql`](supabase/schema.sql) e premi **Run**. Poi fai lo stesso, ognuno in una nuova query, con [`supabase/002_elenco_condomini.sql`](supabase/002_elenco_condomini.sql), [`supabase/003_sicurezza_funzioni.sql`](supabase/003_sicurezza_funzioni.sql), [`supabase/004_data_documenti.sql`](supabase/004_data_documenti.sql), [`supabase/005_anagrafica_millesimi.sql`](supabase/005_anagrafica_millesimi.sql) e [`supabase/006_allegati_documenti.sql`](supabase/006_allegati_documenti.sql). Gli script vanno eseguiti in ordine, una volta sola.
+2. Incolla tutto il contenuto di [`supabase/schema.sql`](supabase/schema.sql) e premi **Run**. Poi fai lo stesso, ognuno in una nuova query, con [`supabase/002_elenco_condomini.sql`](supabase/002_elenco_condomini.sql), [`supabase/003_sicurezza_funzioni.sql`](supabase/003_sicurezza_funzioni.sql), [`supabase/004_data_documenti.sql`](supabase/004_data_documenti.sql), [`supabase/005_anagrafica_millesimi.sql`](supabase/005_anagrafica_millesimi.sql), [`supabase/006_allegati_documenti.sql`](supabase/006_allegati_documenti.sql) e [`supabase/007_simulazione_sondaggi.sql`](supabase/007_simulazione_sondaggi.sql). Gli script vanno eseguiti in ordine, una volta sola.
 3. Controlla che in **Table Editor** compaiano `profiles`, `announcements`, `documents`, `polls`, `poll_options` e `votes`, e che in **Storage** ci sia il bucket `documenti`.
 
 ### 3. Configura l'autenticazione

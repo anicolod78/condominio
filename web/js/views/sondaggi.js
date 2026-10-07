@@ -65,6 +65,7 @@ function card(poll, myOption, results, isAdmin) {
       ${open ? voteForm(poll, options, myOption) : ''}
       ${results ? resultsView(options, results, myOption) : ''}
       ${isAdmin ? `<div class="row">
+        <a class="button-link" href="#/gestione/sondaggi/${poll.id}">Simulazione</a>
         ${open ? `<button class="link" data-close="${poll.id}">Chiudi ora</button>` : ''}
         <button class="link danger" data-delete="${poll.id}">Elimina</button>
       </div>` : ''}

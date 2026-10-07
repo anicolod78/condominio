@@ -17,12 +17,12 @@ let profile = null;
 document.title = NOME_CONDOMINIO;
 document.getElementById('brand').textContent = NOME_CONDOMINIO;
 
-// Le pagine usano "#/nome" o "#/nome/sezione". Il link ricevuto via email arriva
-// invece con "#access_token=..." o "#error=...": in quel caso si mostra la bacheca.
+// Le pagine usano "#/nome", "#/nome/sezione" o "#/nome/sezione/id". Il link ricevuto
+// via email arriva invece con "#access_token=..." o "#error=...": si mostra la bacheca.
 function currentRoute() {
   const path = location.hash.startsWith('#/') ? location.hash.slice(2) : '';
-  const [route = '', sub = ''] = path.split('/');
-  return { route, sub };
+  const [route = '', sub = '', ...args] = path.split('/');
+  return { route, sub, args };
 }
 
 async function render() {
@@ -40,7 +40,7 @@ async function render() {
   }
   const isAdmin = profile.role === 'admin';
 
-  const { route, sub } = currentRoute();
+  const { route, sub, args } = currentRoute();
   let view = routes[route] ?? bacheca;
   if (view === gestione && !isAdmin) view = bacheca;
 
@@ -51,7 +51,7 @@ async function render() {
   }
 
   app.innerHTML = '<p class="muted">Caricamento…</p>';
-  await view.render(app, { profile, isAdmin, sub });
+  await view.render(app, { profile, isAdmin, sub, args });
 }
 
 async function safeRender() {
