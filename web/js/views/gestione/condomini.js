@@ -1,4 +1,5 @@
 import { supabase } from '../../supabase.js';
+import { TOTALE_MILLESIMI } from '../../../config.js';
 import { esc, ensure, flash, bindForm, onEach, fmtMillesimi } from '../../ui.js';
 
 const redirectTo = () => location.origin + location.pathname;
@@ -25,7 +26,10 @@ export async function render(panel, ctx) {
           <label>Email (facoltativa) <input type="email" name="email" autocomplete="off"></label>
           <label>Telefono (facoltativo) <input type="tel" name="phone"></label>
         </div>
-        <label>Millesimi <input type="number" name="millesimi" min="0" step="0.001" value="0" required></label>
+        <div class="cols">
+          <label>Millesimi <input type="number" name="millesimi" min="0" step="0.001" value="0" required></label>
+          <label>Codice unità (facoltativo) <input name="unit_code" placeholder="es. 002.3.076D"></label>
+        </div>
         <label class="choice"><input type="checkbox" name="invite"> Invia subito l'invito al portale (serve l'email)</label>
         <button type="submit">Aggiungi</button>
       </form>
@@ -35,7 +39,9 @@ export async function render(panel, ctx) {
       <h2>Anagrafica (${residents.length})</h2>
       <p class="small">
         Totale millesimi: <strong>${fmtMillesimi(total)}</strong>
-        ${Math.abs(total - 1000) > 0.0005 ? '<span class="error">· la somma non è 1000, controlla i valori</span>' : '<span class="ok">✔</span>'}
+        ${Math.abs(total - TOTALE_MILLESIMI) > 0.0005
+          ? `<span class="error">· la somma non corrisponde al totale delle tabelle (${fmtMillesimi(TOTALE_MILLESIMI)}), controlla i valori</span>`
+          : '<span class="ok">✔ corrisponde alle tabelle millesimali</span>'}
         · <span class="muted">${withAccess} con accesso al portale</span>
       </p>
       <table class="registry">
@@ -57,6 +63,7 @@ export async function render(panel, ctx) {
       email,
       phone: form.phone.value.trim() || null,
       millesimi: Number(form.millesimi.value || 0),
+      unit_code: form.unit_code.value.trim() || null,
     }).select().single().then(friendlyErrors));
 
     if (form.invite.checked) {
@@ -85,6 +92,7 @@ export async function render(panel, ctx) {
       unit: form.unit.value.trim() || null,
       phone: form.phone.value.trim() || null,
       millesimi: Number(form.millesimi.value || 0),
+      unit_code: form.unit_code.value.trim() || null,
     };
     if (!form.email.disabled) changes.email = form.email.value.trim() || null;
 
@@ -132,7 +140,7 @@ function viewRow(r, ctx) {
   const isMe = r.user_id === ctx.profile.id;
   return `
     <tr id="view-${r.id}">
-      <td class="nowrap">${esc(r.unit ?? '—')}</td>
+      <td class="nowrap">${esc(r.unit ?? '—')}${r.unit_code ? `<br><span class="muted small">${esc(r.unit_code)}</span>` : ''}</td>
       <td>${esc(r.full_name)}${isMe ? ' <em class="muted small">(tu)</em>' : ''}<br>
         <span class="muted small">${esc(r.email ?? 'nessuna email')}</span></td>
       <td class="num">${fmtMillesimi(r.millesimi)}</td>
@@ -166,6 +174,9 @@ function editRow(r, ctx) {
           </div>
           <div class="cols">
             <label>Millesimi <input type="number" name="millesimi" min="0" step="0.001" value="${esc(r.millesimi)}" required></label>
+            <label>Codice unità <input name="unit_code" value="${esc(r.unit_code)}" placeholder="es. 002.3.076D"></label>
+          </div>
+          <div class="cols">
             ${r.user_id ? `
               <label>Ruolo nel portale
                 <select name="role" ${isMe ? 'disabled title="Non puoi cambiare il tuo ruolo"' : ''}>
@@ -185,7 +196,10 @@ function editRow(r, ctx) {
 
 function friendlyErrors(response) {
   if (response.error?.code === '23505') {
-    return { ...response, error: new Error('Questa email è già presente in un\'altra scheda') };
+    const message = /unit_code/.test(response.error.message)
+      ? 'Questo codice unità è già assegnato a un\'altra scheda'
+      : 'Questa email è già presente in un\'altra scheda';
+    return { ...response, error: new Error(message) };
   }
   return response;
 }

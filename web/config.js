@@ -9,6 +9,10 @@ export const SUPABASE_KEY = 'sb_publishable_bndPJSfzu-FqtKAWYuIXhQ_W2O9R2DP';
 
 export const NOME_CONDOMINIO = 'Condominio Italia 71';
 
+// Totale dei millesimi delle tabelle dell'amministratore (prospetto "Millesimi reali"):
+// la pagina Gestione segnala se la somma dell'anagrafica non corrisponde
+export const TOTALE_MILLESIMI = 973.494;
+
 export const CATEGORIE_DOCUMENTI = [
   'Verbali assemblea',
   'Bilanci e rendiconti',

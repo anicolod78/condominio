@@ -5,4 +5,4 @@ backup/
 *.dump
 
 # Dati personali dei condomini: non pubblicare
-supabase/dati_condomini.sql
+supabase/dati_*.sql
