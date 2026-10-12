@@ -1,6 +1,6 @@
 import { supabase } from '../../supabase.js';
 import { TOTALE_MILLESIMI } from '../../../config.js';
-import { esc, ensure, flash, bindForm, onEach, fmtMillesimi } from '../../ui.js';
+import { esc, ensure, flash, bindForm, onEach, fmtMillesimi, sortAttrs, sortControl, bindSort } from '../../ui.js';
 
 const redirectTo = () => location.origin + location.pathname;
 
@@ -55,7 +55,10 @@ export async function render(panel, ctx) {
       </p>
       <p class="muted small">Un condomino con più proprietà vota una volta sola, con la somma dei millesimi delle sue unità.
         Per unire due schede, sposta le unità dall'una all'altra con <em>Modifica</em> e poi elimina quella rimasta vuota.</p>
-      <input type="search" id="registry-search" placeholder="Cerca per nome, scala o codice…">
+      <div class="list-tools">
+        <input type="search" id="registry-search" placeholder="Cerca per nome, scala o codice…">
+        ${sortControl()}
+      </div>
       <table class="registry">
         <tr><th>Unità</th><th>Condomino</th><th class="num">Millesimi</th><th>Accesso</th><th></th></tr>
         ${residents.map((r) => viewRow(r, ctx) + editRow(r, ctx, residents)).join('')}
@@ -64,6 +67,8 @@ export async function render(panel, ctx) {
 
   const findResident = (id) => residents.find((r) => r.id === Number(id));
   const refresh = () => render(panel, ctx);
+
+  bindSort(panel, panel.querySelector('.registry'));
 
   panel.querySelector('#registry-search').addEventListener('input', (e) => {
     const q = e.target.value.toLowerCase();
@@ -198,7 +203,7 @@ function viewRow(r, ctx) {
   const codes = r.units.map((u) => u.unit_code).filter(Boolean);
   const text = `${r.full_name} ${r.unit ?? ''} ${codes.join(' ')} ${r.email ?? ''}`.toLowerCase();
   return `
-    <tr id="view-${r.id}" data-text="${esc(text)}">
+    <tr id="view-${r.id}" data-text="${esc(text)}" data-companion="edit-${r.id}" ${sortAttrs(r, codes[0])}>
       <td>${esc(r.unit ?? '—')}
         ${r.units.length ? `<br><span class="muted small">${r.units.map((u) => esc(u.unit_code ?? 'senza codice')).join('<br>')}</span>` : ''}</td>
       <td>${esc(r.full_name)}${isMe ? ' <em class="muted small">(tu)</em>' : ''}<br>

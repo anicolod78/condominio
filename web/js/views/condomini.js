@@ -1,5 +1,5 @@
 import { supabase } from '../supabase.js';
-import { esc, ensure, flash, bindForm, fmtMillesimi } from '../ui.js';
+import { esc, ensure, flash, bindForm, fmtMillesimi, sortAttrs, sortControl, bindSort } from '../ui.js';
 
 export async function render(app, ctx) {
   const [people, mine] = await Promise.all([
@@ -33,11 +33,14 @@ export async function render(app, ctx) {
 
     <section class="card">
       <h2>Elenco (${people.length})</h2>
-      <input type="search" id="people-search" placeholder="Cerca per nome o unità…">
+      <div class="list-tools">
+        <input type="search" id="people-search" placeholder="Cerca per nome o unità…">
+        ${sortControl()}
+      </div>
       <table class="directory">
         <tr><th>Unità</th><th>Nome</th><th class="num">Millesimi</th><th>Contatti</th></tr>
         ${people.map((p) => `
-          <tr data-text="${esc(`${p.full_name ?? ''} ${p.unit ?? ''}`.toLowerCase())}">
+          <tr data-text="${esc(`${p.full_name ?? ''} ${p.unit ?? ''}`.toLowerCase())}" ${sortAttrs(p)}>
             <td class="nowrap">${esc(p.unit ?? '—')}</td>
             <td>${esc(p.full_name)}${p.is_admin ? ' <span class="badge">admin</span>' : ''}</td>
             <td class="num">${fmtMillesimi(p.millesimi)}</td>
@@ -46,6 +49,8 @@ export async function render(app, ctx) {
         <tr class="total"><td></td><td>Totale</td><td class="num">${fmtMillesimi(total)}</td><td></td></tr>
       </table>
     </section>`;
+
+  bindSort(app, app.querySelector('.directory'));
 
   app.querySelector('#people-search').addEventListener('input', (e) => {
     const q = e.target.value.toLowerCase();

@@ -77,3 +77,71 @@ export function onEach(root, selector, handler) {
     el.addEventListener('click', guarded(() => handler(el)));
   });
 }
+
+// ---------------------------------------------------------------------------
+// Ordinamento degli elenchi di condomini (per unità o per nome), lato pagina.
+// La scelta è ricordata nel browser: è solo una comodità, se non si può
+// salvare si usa l'ordinamento per unità.
+// ---------------------------------------------------------------------------
+const SORT_KEY = 'ordine-condomini';
+const collator = new Intl.Collator('it', { sensitivity: 'base', numeric: true });
+
+function readSortPref() {
+  try {
+    return localStorage.getItem(SORT_KEY) === 'nome' ? 'nome' : 'unita';
+  } catch {
+    return 'unita';
+  }
+}
+
+function writeSortPref(value) {
+  try {
+    localStorage.setItem(SORT_KEY, value);
+  } catch {
+    // preferenza non salvabile (es. navigazione privata): si ignora
+  }
+}
+
+// Attributi da mettere sulla riga <tr> di un condomino
+export function sortAttrs(person, code = '') {
+  return `data-sort-name="${esc(person.full_name ?? '')}" data-sort-unit="${esc(person.unit ?? '')}" data-sort-code="${esc(code ?? '')}"`;
+}
+
+export function sortControl() {
+  const mode = readSortPref();
+  return `
+    <label class="sort-control">Ordina per
+      <select data-sort>
+        <option value="unita" ${mode === 'unita' ? 'selected' : ''}>Unità</option>
+        <option value="nome" ${mode === 'nome' ? 'selected' : ''}>Nome</option>
+      </select>
+    </label>`;
+}
+
+// Riordina le righe con data-sort-*; una riga con data-companion="id" si porta
+// dietro la riga indicata (es. il modulo di modifica). Le righe .total restano in fondo.
+export function sortRows(table, mode) {
+  const body = table.tBodies[0];
+  const rows = [...body.querySelectorAll('tr[data-sort-name]')];
+  const byName = (a, b) => collator.compare(a.dataset.sortName, b.dataset.sortName);
+  const byUnit = (a, b) => (!a.dataset.sortUnit) - (!b.dataset.sortUnit)
+    || collator.compare(a.dataset.sortUnit, b.dataset.sortUnit)
+    || collator.compare(a.dataset.sortCode, b.dataset.sortCode)
+    || byName(a, b);
+  rows.sort(mode === 'nome' ? byName : byUnit);
+  for (const row of rows) {
+    body.appendChild(row);
+    const companion = row.dataset.companion && body.querySelector(`#${row.dataset.companion}`);
+    if (companion) body.appendChild(companion);
+  }
+  body.querySelectorAll('tr.total').forEach((row) => body.appendChild(row));
+}
+
+export function bindSort(root, table) {
+  const select = root.querySelector('select[data-sort]');
+  select.addEventListener('change', () => {
+    writeSortPref(select.value);
+    sortRows(table, select.value);
+  });
+  sortRows(table, select.value);
+}

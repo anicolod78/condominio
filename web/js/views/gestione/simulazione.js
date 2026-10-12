@@ -1,12 +1,14 @@
 import { supabase } from '../../supabase.js';
-import { esc, ensure, flash, guarded, fmtMillesimi } from '../../ui.js';
+import { esc, ensure, flash, guarded, fmtMillesimi, sortAttrs, sortControl, bindSort } from '../../ui.js';
+
+const firstCode = (r) => (r.units ?? []).map((u) => u.unit_code).filter(Boolean).sort()[0] ?? '';
 
 // Simulazione di un sondaggio: una risposta per ogni scheda dell'anagrafica,
 // salvata subito e con i risultati in millesimi ricalcolati a ogni modifica
 export async function render(panel, pollId) {
   const [poll, residents, saved] = await Promise.all([
     supabase.from('polls').select('*, poll_options(*)').eq('id', pollId).maybeSingle().then(ensure),
-    supabase.from('residents').select('id, full_name, unit, millesimi')
+    supabase.from('residents').select('id, full_name, unit, millesimi, units(unit_code)')
       .order('unit', { nullsFirst: false }).order('full_name').then(ensure),
     supabase.from('poll_simulations').select('resident_id, option_id').eq('poll_id', pollId).then(ensure),
   ]);
@@ -37,7 +39,10 @@ export async function render(panel, pollId) {
     <section class="card">
       <h2>Risposte per condomino</h2>
       <div class="sim-tools">
-        <input type="search" id="sim-search" placeholder="Cerca per nome o unità…">
+        <div class="list-tools">
+          <input type="search" id="sim-search" placeholder="Cerca per nome o unità…">
+          ${sortControl()}
+        </div>
         <div class="sim-bulk">
           <span class="small">Assegna</span>
           ${optionSelect(null, 'id="bulk-option"')}
@@ -49,7 +54,7 @@ export async function render(panel, pollId) {
       <table class="sim">
         <tr><th>Unità</th><th>Condomino</th><th class="num">Millesimi</th><th>Risposta</th></tr>
         ${residents.map((r) => `
-          <tr data-text="${esc(`${r.full_name} ${r.unit ?? ''}`.toLowerCase())}">
+          <tr data-text="${esc(`${r.full_name} ${r.unit ?? ''}`.toLowerCase())}" ${sortAttrs(r, firstCode(r))}>
             <td class="nowrap">${esc(r.unit ?? '—')}</td>
             <td>${esc(r.full_name)}</td>
             <td class="num">${fmtMillesimi(r.millesimi)}</td>
@@ -65,6 +70,8 @@ export async function render(panel, pollId) {
     tally.innerHTML = tallyView(options, residents, choices);
   };
   updateSummary();
+
+  bindSort(panel, panel.querySelector('.sim'));
 
   panel.querySelector('#sim-search').addEventListener('input', (e) => {
     const q = e.target.value.toLowerCase();

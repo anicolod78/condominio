@@ -350,3 +350,9 @@ a { color: var(--accent); }
   .unit-fields { grid-template-columns: 1fr 1fr; }
   .unit-fields label:first-child { grid-column: 1 / -1; }
 }
+
+/* Barra sopra gli elenchi: ricerca + ordinamento */
+.list-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 12px; }
+.list-tools input[type=search] { flex: 1 1 220px; margin: 0; }
+.sort-control { flex-direction: row; align-items: center; gap: 6px; font-weight: 400; font-size: .9rem; white-space: nowrap; }
+.sort-control select { width: auto; padding: 6px 8px; }
