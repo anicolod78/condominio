@@ -42,7 +42,7 @@ Nell'elenco condomini email e telefono sono visibili agli altri solo se la perso
 
 **Anagrafica e millesimi.** Ogni condomino può possedere più unità immobiliari e vota una sola volta, con la somma dei loro millesimi. L'elenco dei condomini è indipendente dagli account: una scheda può esistere senza email e senza accesso al portale. Quando qualcuno accetta un invito, il suo account si collega alla scheda con la stessa email. Nei sondaggi, a ogni opzione si sommano i millesimi delle schede di chi l'ha votata. Le percentuali sono calcolate sul totale dei millesimi in anagrafica. Chi ha accesso al portale ma 0 millesimi (es. un familiare) conta nel numero dei voti, non nei millesimi.
 
-**Simulazione dei sondaggi (solo admin).** Da **Gestione → Sondaggi → Simulazione** (oppure dal pulsante *Simulazione* sotto ogni sondaggio) l'admin indica una risposta per ogni scheda dell'anagrafica, anche per chi non è iscritto al portale, e vede subito i risultati in schede e millesimi. Le risposte simulate restano salvate a parte, sono visibili solo agli admin e non modificano i voti reali.
+**Simulazione dei sondaggi (solo admin).** Da **Gestione → Sondaggi → Simulazione** (oppure dal pulsante *Simulazione* sotto ogni sondaggio) l'admin indica una risposta per ogni scheda dell'anagrafica, anche per chi non è iscritto al portale, e vede subito i risultati in teste e millesimi. Le risposte simulate restano salvate a parte, sono visibili solo agli admin e non modificano i voti reali.
 
 I voti sono riservati: ognuno vede solo il proprio. I risultati complessivi compaiono dopo aver votato o alla chiusura del sondaggio. Anche l'admin vede solo i totali.
 

@@ -3,7 +3,7 @@ import { esc, ensure, flash, guarded, fmtMillesimi, sortAttrs, sortControl, bind
 
 const firstCode = (r) => (r.units ?? []).map((u) => u.unit_code).filter(Boolean).sort()[0] ?? '';
 
-// Simulazione di un sondaggio: una risposta per ogni scheda dell'anagrafica,
+// Simulazione di un sondaggio: una risposta per ogni testa (condomino) dell'anagrafica,
 // salvata subito e con i risultati in millesimi ricalcolati a ogni modifica
 export async function render(panel, pollId) {
   const [poll, residents, saved] = await Promise.all([
@@ -46,7 +46,7 @@ export async function render(panel, pollId) {
         <div class="sim-bulk">
           <span class="small">Assegna</span>
           ${optionSelect(null, 'id="bulk-option"')}
-          <button type="button" class="secondary" id="bulk-apply">a tutte le schede senza risposta</button>
+          <button type="button" class="secondary" id="bulk-apply">a tutte le teste senza risposta</button>
           <button type="button" class="link danger" id="sim-reset">Azzera simulazione</button>
         </div>
       </div>
@@ -107,13 +107,13 @@ export async function render(panel, pollId) {
     const optionId = Number(panel.querySelector('#bulk-option').value);
     if (!optionId) throw new Error('Scegli prima la risposta da assegnare');
     const missing = residents.filter((r) => !choices.has(r.id));
-    if (!missing.length) throw new Error('Tutte le schede hanno già una risposta');
+    if (!missing.length) throw new Error('Tutte le teste hanno già una risposta');
     const label = options.find((o) => o.id === optionId).label;
-    if (!confirm(`Assegnare "${label}" alle ${missing.length} schede senza risposta?`)) return;
+    if (!confirm(`Assegnare "${label}" alle ${missing.length} teste senza risposta?`)) return;
     ensure(await supabase.from('poll_simulations').insert(
       missing.map((r) => ({ poll_id: poll.id, resident_id: r.id, option_id: optionId })),
     ));
-    flash(`Risposta assegnata a ${missing.length} schede`);
+    flash(`Risposta assegnata a ${missing.length} teste`);
     await render(panel, pollId);
   }));
 
@@ -156,12 +156,12 @@ function summaryView(options, residents, choices) {
   const row = (label, t, extraClass = '') => `
     <div class="bar-row ${extraClass}">
       <span>${esc(label)}</span>
-      <span class="muted small">${t.count} sched${t.count === 1 ? 'a' : 'e'} · <strong>${fmtMillesimi(t.millesimi)} ‰</strong> · ${pct(t.millesimi)}</span>
+      <span class="muted small">${t.count} test${t.count === 1 ? 'a' : 'e'} · <strong>${fmtMillesimi(t.millesimi)} ‰</strong> · ${pct(t.millesimi)}</span>
       <div class="bar"><div style="width:${total ? (t.millesimi / total) * 100 : 0}%"></div></div>
     </div>`;
 
   return `
-    <p class="small">Risposte: <strong>${answered}</strong> su ${residents.length} schede ·
+    <p class="small">Risposte: <strong>${answered}</strong> su ${residents.length} teste ·
       ${fmtMillesimi(total - none.millesimi)} millesimi su ${fmtMillesimi(total)} (${pct(total - none.millesimi)})</p>
     <div class="results">
       ${options.map((o) => row(o.label, tally.get(o.id))).join('')}
