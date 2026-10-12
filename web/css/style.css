@@ -336,3 +336,17 @@ a { color: var(--accent); }
   background: color-mix(in srgb, var(--accent) 10%, transparent);
   border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
 }
+
+/* Unità immobiliari nel modulo di modifica del condomino */
+#registry-search { margin-bottom: 12px; }
+.unit-list { display: flex; flex-direction: column; gap: 10px; }
+.unit-row { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; border-top: 1px dashed var(--border); }
+.unit-row:first-child { border-top: 0; padding-top: 0; }
+.unit-fields { display: grid; grid-template-columns: 2fr 1.5fr 1fr; gap: 8px; }
+.unit-actions { display: flex; flex-wrap: wrap; align-items: end; gap: 8px 16px; }
+.unit-actions label:first-child { flex: 1 1 260px; }
+.my-units { margin: 4px 0 12px; padding-left: 18px; }
+@media (max-width: 640px) {
+  .unit-fields { grid-template-columns: 1fr 1fr; }
+  .unit-fields label:first-child { grid-column: 1 / -1; }
+}

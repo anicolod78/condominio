@@ -16,7 +16,8 @@ condominio/
 │   ├── 005_anagrafica_millesimi.sql anagrafica condomini e millesimi
 │   ├── 006_allegati_documenti.sql allegati zip dei documenti
 │   ├── 007_simulazione_sondaggi.sql simulazione dei sondaggi (solo admin)
-│   └── 008_codici_unita.sql     codice unità immobiliare nell'anagrafica
+│   ├── 008_codici_unita.sql     codice unità immobiliare nell'anagrafica
+│   └── 009_unita_immobiliari.sql più unità per condomino, millesimi sommati
 ├── web/                         sito pubblicato su GitHub Pages
 │   ├── config.js                ← URL e chiave pubblica Supabase
 │   ├── index.html
@@ -39,7 +40,7 @@ condominio/
 
 Nell'elenco condomini email e telefono sono visibili agli altri solo se la persona lo sceglie dal proprio profilo. Il consenso è disattivato per impostazione predefinita.
 
-**Anagrafica e millesimi.** L'elenco dei condomini è indipendente dagli account: una scheda può esistere senza email e senza accesso al portale. Quando qualcuno accetta un invito, il suo account si collega alla scheda con la stessa email. Nei sondaggi, a ogni opzione si sommano i millesimi delle schede di chi l'ha votata. Le percentuali sono calcolate sul totale dei millesimi in anagrafica. Chi ha accesso al portale ma 0 millesimi (es. un familiare) conta nel numero dei voti, non nei millesimi.
+**Anagrafica e millesimi.** Ogni condomino può possedere più unità immobiliari e vota una sola volta, con la somma dei loro millesimi. L'elenco dei condomini è indipendente dagli account: una scheda può esistere senza email e senza accesso al portale. Quando qualcuno accetta un invito, il suo account si collega alla scheda con la stessa email. Nei sondaggi, a ogni opzione si sommano i millesimi delle schede di chi l'ha votata. Le percentuali sono calcolate sul totale dei millesimi in anagrafica. Chi ha accesso al portale ma 0 millesimi (es. un familiare) conta nel numero dei voti, non nei millesimi.
 
 **Simulazione dei sondaggi (solo admin).** Da **Gestione → Sondaggi → Simulazione** (oppure dal pulsante *Simulazione* sotto ogni sondaggio) l'admin indica una risposta per ogni scheda dell'anagrafica, anche per chi non è iscritto al portale, e vede subito i risultati in schede e millesimi. Le risposte simulate restano salvate a parte, sono visibili solo agli admin e non modificano i voti reali.
 
@@ -56,7 +57,7 @@ I voti sono riservati: ognuno vede solo il proprio. I risultati complessivi comp
 
 ### 2. Crea il database
 1. Menu **SQL Editor** → **New query**.
-2. Incolla tutto il contenuto di [`supabase/schema.sql`](supabase/schema.sql) e premi **Run**. Poi fai lo stesso, ognuno in una nuova query, con [`supabase/002_elenco_condomini.sql`](supabase/002_elenco_condomini.sql), [`supabase/003_sicurezza_funzioni.sql`](supabase/003_sicurezza_funzioni.sql), [`supabase/004_data_documenti.sql`](supabase/004_data_documenti.sql), [`supabase/005_anagrafica_millesimi.sql`](supabase/005_anagrafica_millesimi.sql), [`supabase/006_allegati_documenti.sql`](supabase/006_allegati_documenti.sql), [`supabase/007_simulazione_sondaggi.sql`](supabase/007_simulazione_sondaggi.sql) e [`supabase/008_codici_unita.sql`](supabase/008_codici_unita.sql). Gli script vanno eseguiti in ordine, una volta sola.
+2. Incolla tutto il contenuto di [`supabase/schema.sql`](supabase/schema.sql) e premi **Run**. Poi fai lo stesso, ognuno in una nuova query, con [`supabase/002_elenco_condomini.sql`](supabase/002_elenco_condomini.sql), [`supabase/003_sicurezza_funzioni.sql`](supabase/003_sicurezza_funzioni.sql), [`supabase/004_data_documenti.sql`](supabase/004_data_documenti.sql), [`supabase/005_anagrafica_millesimi.sql`](supabase/005_anagrafica_millesimi.sql), [`supabase/006_allegati_documenti.sql`](supabase/006_allegati_documenti.sql), [`supabase/007_simulazione_sondaggi.sql`](supabase/007_simulazione_sondaggi.sql), [`supabase/008_codici_unita.sql`](supabase/008_codici_unita.sql) e [`supabase/009_unita_immobiliari.sql`](supabase/009_unita_immobiliari.sql). Gli script vanno eseguiti in ordine, una volta sola.
 3. Controlla che in **Table Editor** compaiano `profiles`, `announcements`, `documents`, `polls`, `poll_options` e `votes`, e che in **Storage** ci sia il bucket `documenti`.
 
 ### 3. Configura l'autenticazione
@@ -137,7 +138,7 @@ Nota: nella schermata di consenso Google comparirà l'indirizzo `TUO-PROGETTO.su
   - per chi ha un'email premi **Invita**, oppure spunta "Invia subito l'invito" quando crei la scheda.
 - In alternativa: **Authentication → Users → Add user → Send invitation**. Se esiste già una scheda con la stessa email, l'account si collega a quella; altrimenti ne viene creata una nuova.
 - Controlla che il totale dei millesimi corrisponda a quello delle tabelle dell'amministratore, impostato in `TOTALE_MILLESIMI` dentro [`web/config.js`](web/config.js) (oggi 973,494): la pagina lo segnala se non torna.
-- Ogni scheda può riportare il **codice unità** delle tabelle (es. `002.3.076D`; più codici separati da virgola se la persona ha più unità), utile per abbinare gli aggiornamenti futuri.
+- Ogni condomino (la "testa" che vota) può avere **più unità immobiliari**, ognuna con codice delle tabelle (es. `002.3.076D`), scala e millesimi. I millesimi del condomino sono la somma delle sue unità e vengono calcolati in automatico. Da **Modifica** puoi aggiungere, correggere ed eliminare unità, oppure **spostarle a un altro condomino**: per unire due schede dello stesso proprietario, sposta le unità e poi elimina la scheda rimasta vuota.
 - Gli script con i dati dei condomini (`supabase/dati_*.sql`) restano solo sul computer: contengono dati personali e sono esclusi dal repository.
 - Dallo stesso elenco puoi correggere nome, unità e ruolo, oppure **Rimuovere** chi lascia il condominio.
 - Agli accessi successivi, dalla pagina di login si può:

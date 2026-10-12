@@ -4,7 +4,7 @@ import { esc, ensure, flash, bindForm, fmtMillesimi } from '../ui.js';
 export async function render(app, ctx) {
   const [people, mine] = await Promise.all([
     supabase.rpc('directory').then(ensure),
-    supabase.from('residents').select('*').eq('user_id', ctx.profile.id).maybeSingle().then(ensure),
+    supabase.from('residents').select('*, units(unit_code, scala, millesimi)').eq('user_id', ctx.profile.id).maybeSingle().then(ensure),
   ]);
   const total = people.reduce((sum, p) => sum + Number(p.millesimi), 0);
 
@@ -18,7 +18,8 @@ export async function render(app, ctx) {
         <span class="muted small">${esc(mine.unit ?? 'Unità non indicata')} · ${fmtMillesimi(mine.millesimi)} millesimi ·
           contatti ${mine.share_contacts ? 'visibili' : 'riservati'}</span>
       </summary>
-      <p>${esc(mine.full_name)} · Unità <strong>${esc(mine.unit ?? 'non indicata')}</strong> · ${fmtMillesimi(mine.millesimi)} millesimi</p>
+      <p>${esc(mine.full_name)} · <strong>${fmtMillesimi(mine.millesimi)} millesimi</strong></p>
+      ${mine.units.length ? `<ul class="my-units small">${mine.units.map((u) => `<li>${esc(u.scala ?? '')} ${u.unit_code ? `· ${esc(u.unit_code)}` : ''} · ${fmtMillesimi(u.millesimi)} millesimi</li>`).join('')}</ul>` : ''}
       <form id="f-profilo" class="stack">
         <label>Telefono <input name="phone" type="tel" value="${esc(mine.phone)}" maxlength="40"></label>
         <label class="choice">
