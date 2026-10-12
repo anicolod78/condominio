@@ -1,5 +1,6 @@
 import { supabase } from '../../supabase.js';
-import { esc, ensure, flash, guarded, bindForm, fmtMillesimi, sortAttrs, sortControl, bindSort } from '../../ui.js';
+import { NOME_CONDOMINIO } from '../../../config.js';
+import { esc, ensure, flash, guarded, bindForm, fmtDate, fmtMillesimi, sortAttrs, sortControl, bindSort } from '../../ui.js';
 import { hasMajority, describeMajority, evaluate, majorityLine, majorityFields, bindMajorityFields, readMajority } from '../../majority.js';
 
 const firstCode = (r) => (r.units ?? []).map((u) => u.unit_code).filter(Boolean).sort()[0] ?? '';
@@ -21,6 +22,7 @@ export async function render(panel, pollId) {
 
   const options = [...poll.poll_options].sort((a, b) => a.position - b.position);
   const choices = new Map(saved.map((s) => [s.resident_id, s.option_id]));
+  const answerLabel = (optionId) => options.find((o) => o.id === optionId)?.label ?? '—';
   const optionSelect = (selected, attrs = '') => `
     <select ${attrs}>
       <option value="">— nessuna risposta —</option>
@@ -28,14 +30,23 @@ export async function render(panel, pollId) {
     </select>`;
 
   panel.innerHTML = `
-    <p><a href="#/gestione/sondaggi">← Tutti i sondaggi</a></p>
+    <p class="no-print"><a href="#/gestione/sondaggi">← Tutti i sondaggi</a></p>
+
+    <header class="print-only print-head">
+      <strong>${esc(NOME_CONDOMINIO)}</strong> · Simulazione di sondaggio · stampata il <span id="print-date"></span>
+    </header>
 
     <section class="card">
-      <h2>Simulazione: ${esc(poll.question)}</h2>
-      <p class="muted small">Visibile solo agli admin. Le risposte simulate sono salvate a parte
+      <div class="card-head">
+        <h2>Simulazione: ${esc(poll.question)}</h2>
+        <button type="button" class="secondary no-print" id="sim-print">Stampa</button>
+      </div>
+      <p class="muted small no-print">Visibile solo agli admin. Le risposte simulate sono salvate a parte
         e non modificano i voti reali dei condomini.</p>
+      <p class="print-only small">Documento di lavoro: le risposte sono simulate dall'amministrazione del portale
+        e non costituiscono voto né delibera assembleare.</p>
       <div id="sim-summary"></div>
-      <details class="majority-edit">
+      <details class="majority-edit no-print">
         <summary>${hasMajority(poll) ? 'Cambia la maggioranza richiesta' : 'Imposta la maggioranza richiesta'}</summary>
         <form id="f-maggioranza" class="stack">
           ${majorityFields(poll)}
@@ -46,7 +57,7 @@ export async function render(panel, pollId) {
 
     <section class="card">
       <h2>Risposte per condomino</h2>
-      <div class="sim-tools">
+      <div class="sim-tools no-print">
         <div class="list-tools">
           <input type="search" id="sim-search" placeholder="Cerca per nome o unità…">
           ${sortControl()}
@@ -58,16 +69,21 @@ export async function render(panel, pollId) {
           <button type="button" class="link danger" id="sim-reset">Azzera simulazione</button>
         </div>
       </div>
-      <div id="sim-tally" class="sim-tally" aria-live="polite"></div>
+      <div id="sim-tally" class="sim-tally no-print" aria-live="polite"></div>
       <table class="sim">
-        <tr><th>Unità</th><th>Condomino</th><th class="num">Millesimi</th><th>Risposta</th></tr>
+        <thead><tr><th>Unità</th><th>Condomino</th><th class="num">Millesimi</th><th>Risposta</th></tr></thead>
+        <tbody>
         ${residents.map((r) => `
           <tr data-text="${esc(`${r.full_name} ${r.unit ?? ''}`.toLowerCase())}" ${sortAttrs(r, firstCode(r))}>
             <td class="nowrap">${esc(r.unit ?? '—')}</td>
             <td>${esc(r.full_name)}</td>
             <td class="num">${fmtMillesimi(r.millesimi)}</td>
-            <td>${optionSelect(choices.get(r.id) ?? null, `data-resident="${r.id}"`)}</td>
+            <td>
+              ${optionSelect(choices.get(r.id) ?? null, `data-resident="${r.id}"`)}
+              <span class="print-only answer-text" data-answer="${r.id}">${esc(answerLabel(choices.get(r.id)))}</span>
+            </td>
           </tr>`).join('')}
+        </tbody>
       </table>
     </section>`;
 
@@ -88,6 +104,20 @@ export async function render(panel, pollId) {
   });
 
   bindSort(panel, panel.querySelector('.sim'));
+
+  const prepareForPrint = () => {
+    const search = panel.querySelector('#sim-search');
+    if (!search) return;
+    search.value = '';
+    panel.querySelectorAll('tr[data-text]').forEach((tr) => { tr.hidden = false; });
+    panel.querySelector('#print-date').textContent = fmtDate(new Date());
+  };
+  prepareForPrint();
+  window.onbeforeprint = prepareForPrint; // anche con Ctrl+P o dal menu del browser
+  panel.querySelector('#sim-print').addEventListener('click', () => {
+    prepareForPrint();
+    window.print();
+  });
 
   panel.querySelector('#sim-search').addEventListener('input', (e) => {
     const q = e.target.value.toLowerCase();
@@ -112,6 +142,7 @@ export async function render(panel, pollId) {
           throw error;
         }
         if (optionId) choices.set(residentId, optionId); else choices.delete(residentId);
+        panel.querySelector(`[data-answer="${residentId}"]`).textContent = answerLabel(optionId);
         updateSummary();
       } finally {
         select.disabled = false;
