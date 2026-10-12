@@ -1,5 +1,6 @@
 import { supabase } from '../supabase.js';
 import { esc, nl2br, fmtDate, fmtMillesimi, ensure, flash, bindForm, onEach } from '../ui.js';
+import { hasMajority, describeMajority, evaluate, majorityLine } from '../majority.js';
 
 const isOpen = (poll) => !poll.closes_at || new Date(poll.closes_at) > new Date();
 
@@ -63,7 +64,8 @@ function card(poll, myOption, results, isAdmin) {
       </header>
       ${poll.description ? `<p>${nl2br(poll.description)}</p>` : ''}
       ${open ? voteForm(poll, options, myOption) : ''}
-      ${results ? resultsView(options, results, myOption) : ''}
+      ${hasMajority(poll) ? `<p class="small majority-rule">Maggioranza richiesta: ${esc(describeMajority(poll))}</p>` : ''}
+      ${results ? resultsView(poll, options, results, myOption) : ''}
       ${isAdmin ? `<div class="row">
         <a class="button-link" href="#/gestione/sondaggi/${poll.id}">Simulazione</a>
         ${open ? `<button class="link" data-close="${poll.id}">Chiudi ora</button>` : ''}
@@ -84,11 +86,12 @@ function voteForm(poll, options, myOption) {
     </form>`;
 }
 
-function resultsView(options, results, myOption) {
+function resultsView(poll, options, results, myOption) {
   const byOption = new Map(results.map((r) => [r.option_id, { votes: Number(r.votes), millesimi: Number(r.millesimi) }]));
   const condoTotal = Number(results[0]?.total_millesimi ?? 0);
   const votes = [...byOption.values()].reduce((a, r) => a + r.votes, 0);
   const votedMillesimi = [...byOption.values()].reduce((a, r) => a + r.millesimi, 0);
+  const totalHeads = Number(results[0]?.total_heads ?? 0);
   const share = (value, total) => (total ? Math.round((value / total) * 1000) / 10 : 0);
   const pctText = (value) => `${value.toLocaleString('it-IT')}%`;
 
@@ -113,6 +116,7 @@ function resultsView(options, results, myOption) {
               ${r.votes} vot${r.votes === 1 ? 'o' : 'i'}${useMillesimi ? ` · <strong>${fmtMillesimi(r.millesimi)} ‰</strong>` : ''} · ${pctText(pct)}
             </span>
             <div class="bar"><div style="width:${pct}%"></div></div>
+            ${majorityLine(evaluate(poll, r, { answered: votes, totalHeads }), r.votes, r.millesimi)}
           </div>`;
       }).join('')}
       ${useMillesimi ? '<p class="muted small">Le percentuali sono calcolate sul totale dei millesimi del condominio.</p>' : ''}

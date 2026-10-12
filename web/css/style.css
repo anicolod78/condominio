@@ -356,3 +356,14 @@ a { color: var(--accent); }
 .list-tools input[type=search] { flex: 1 1 220px; margin: 0; }
 .sort-control { flex-direction: row; align-items: center; gap: 6px; font-weight: 400; font-size: .9rem; white-space: nowrap; }
 .sort-control select { width: auto; padding: 6px 8px; }
+
+/* Maggioranze dei sondaggi */
+.majority-rule { margin: 8px 0; padding: 6px 10px; border-left: 3px solid var(--accent); background: var(--bg); border-radius: 4px; }
+.majority { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: .8rem; color: var(--muted); }
+.majority strong { font-weight: 600; }
+.majority.passed strong { color: var(--ok); }
+.majority.failed strong { color: var(--danger); }
+.majority-edit { margin-top: 12px; }
+.majority-edit summary { cursor: pointer; color: var(--accent); font-size: .9rem; }
+.majority-edit form { margin-top: 10px; }
+.majority-fields select[name=majority] { width: 100%; }

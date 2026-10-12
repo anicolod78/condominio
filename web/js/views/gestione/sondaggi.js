@@ -1,5 +1,6 @@
 import { supabase } from '../../supabase.js';
 import { esc, ensure, flash, bindForm, fmtDate } from '../../ui.js';
+import { majorityFields, bindMajorityFields, readMajority } from '../../majority.js';
 import * as simulazione from './simulazione.js';
 
 export async function render(panel, ctx) {
@@ -25,6 +26,7 @@ export async function render(panel, ctx) {
         <label>Descrizione (facoltativa) <textarea name="description" rows="3"></textarea></label>
         <label>Opzioni, una per riga <textarea name="options" rows="4" required placeholder="Favorevole&#10;Contrario&#10;Astenuto"></textarea></label>
         <label>Chiusura (facoltativa) <input type="datetime-local" name="closes_at"></label>
+        ${majorityFields()}
         <button type="submit">Crea sondaggio</button>
       </form>
     </section>
@@ -46,15 +48,19 @@ export async function render(panel, ctx) {
       <p class="muted small">I sondaggi si chiudono o si eliminano dalla pagina <a href="#/sondaggi">Sondaggi</a>.</p>
     </section>`;
 
+  bindMajorityFields(panel.querySelector('#f-sondaggio'));
+
   bindForm(panel.querySelector('#f-sondaggio'), async (form) => {
     const labels = form.options.value.split('\n').map((s) => s.trim()).filter(Boolean);
     if (labels.length < 2) throw new Error('Servono almeno due opzioni');
     const closesAt = form.closes_at.value ? new Date(form.closes_at.value).toISOString() : null;
+    const majority = readMajority(form);
 
     const poll = ensure(await supabase.from('polls').insert({
       question: form.question.value.trim(),
       description: form.description.value.trim(),
       closes_at: closesAt,
+      ...majority,
     }).select().single());
 
     const { error } = await supabase.from('poll_options')

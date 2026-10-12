@@ -1,5 +1,6 @@
 import { supabase } from '../../supabase.js';
-import { esc, ensure, flash, guarded, fmtMillesimi, sortAttrs, sortControl, bindSort } from '../../ui.js';
+import { esc, ensure, flash, guarded, bindForm, fmtMillesimi, sortAttrs, sortControl, bindSort } from '../../ui.js';
+import { hasMajority, describeMajority, evaluate, majorityLine, majorityFields, bindMajorityFields, readMajority } from '../../majority.js';
 
 const firstCode = (r) => (r.units ?? []).map((u) => u.unit_code).filter(Boolean).sort()[0] ?? '';
 
@@ -34,6 +35,13 @@ export async function render(panel, pollId) {
       <p class="muted small">Visibile solo agli admin. Le risposte simulate sono salvate a parte
         e non modificano i voti reali dei condomini.</p>
       <div id="sim-summary"></div>
+      <details class="majority-edit">
+        <summary>${hasMajority(poll) ? 'Cambia la maggioranza richiesta' : 'Imposta la maggioranza richiesta'}</summary>
+        <form id="f-maggioranza" class="stack">
+          ${majorityFields(poll)}
+          <button type="submit">Salva maggioranza</button>
+        </form>
+      </details>
     </section>
 
     <section class="card">
@@ -66,10 +74,18 @@ export async function render(panel, pollId) {
   const summary = panel.querySelector('#sim-summary');
   const tally = panel.querySelector('#sim-tally');
   const updateSummary = () => {
-    summary.innerHTML = summaryView(options, residents, choices);
+    summary.innerHTML = summaryView(poll, options, residents, choices);
     tally.innerHTML = tallyView(options, residents, choices);
   };
   updateSummary();
+
+  const majorityForm = panel.querySelector('#f-maggioranza');
+  bindMajorityFields(majorityForm);
+  bindForm(majorityForm, async () => {
+    ensure(await supabase.from('polls').update(readMajority(majorityForm)).eq('id', poll.id));
+    flash('Maggioranza salvata');
+    await render(panel, pollId);
+  });
 
   bindSort(panel, panel.querySelector('.sim'));
 
@@ -140,7 +156,7 @@ function tallyView(options, residents, choices) {
   ].join('');
 }
 
-function summaryView(options, residents, choices) {
+function summaryView(poll, options, residents, choices) {
   const total = residents.reduce((sum, r) => sum + Number(r.millesimi), 0);
   const pct = (value) => `${(total ? Math.round((value / total) * 1000) / 10 : 0).toLocaleString('it-IT')}%`;
 
@@ -152,19 +168,23 @@ function summaryView(options, residents, choices) {
     bucket.millesimi += Number(r.millesimi);
   }
   const answered = residents.length - none.count;
+  const totalHeads = residents.filter((r) => Number(r.millesimi) > 0).length;
 
-  const row = (label, t, extraClass = '') => `
+  const row = (label, t, extraClass = '', majority = '') => `
     <div class="bar-row ${extraClass}">
       <span>${esc(label)}</span>
       <span class="muted small">${t.count} test${t.count === 1 ? 'a' : 'e'} · <strong>${fmtMillesimi(t.millesimi)} ‰</strong> · ${pct(t.millesimi)}</span>
       <div class="bar"><div style="width:${total ? (t.millesimi / total) * 100 : 0}%"></div></div>
+      ${majority}
     </div>`;
+  const majorityFor = (t) => majorityLine(evaluate(poll, { votes: t.count, millesimi: t.millesimi }, { answered, totalHeads }), t.count, t.millesimi);
 
   return `
     <p class="small">Risposte: <strong>${answered}</strong> su ${residents.length} teste ·
       ${fmtMillesimi(total - none.millesimi)} millesimi su ${fmtMillesimi(total)} (${pct(total - none.millesimi)})</p>
+    ${hasMajority(poll) ? `<p class="small majority-rule">Maggioranza richiesta: ${esc(describeMajority(poll))}</p>` : ''}
     <div class="results">
-      ${options.map((o) => row(o.label, tally.get(o.id))).join('')}
+      ${options.map((o) => row(o.label, tally.get(o.id), '', majorityFor(tally.get(o.id)))).join('')}
       ${row('Senza risposta', none, 'muted-row')}
     </div>
     <p class="muted small">Le percentuali sono calcolate sul totale dei millesimi in anagrafica.</p>`;
