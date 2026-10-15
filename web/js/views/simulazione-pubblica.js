@@ -9,7 +9,11 @@ export async function render(app, pollId) {
   const [poll, summary, detail] = await Promise.all([
     supabase.from('polls').select('*, poll_options(*)').eq('id', pollId).maybeSingle().then(ensure),
     supabase.rpc('simulation_summary', { p_poll_id: pollId }).then(ensure),
-    supabase.rpc('simulation_detail', { p_poll_id: pollId }).then(ensure),
+    // Il dettaglio è facoltativo: se non è disponibile si mostra comunque il riepilogo
+    supabase.rpc('simulation_detail', { p_poll_id: pollId }).then(({ data, error }) => {
+      if (error) console.warn('Dettaglio della simulazione non disponibile', error);
+      return error ? [] : data;
+    }),
   ]);
 
   const back = '<p class="no-print"><a href="#/sondaggi">← Tutti i sondaggi</a></p>';

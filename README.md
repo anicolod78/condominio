@@ -19,7 +19,8 @@ condominio/
 │   ├── 008_codici_unita.sql     codice unità immobiliare nell'anagrafica
 │   ├── 009_unita_immobiliari.sql più unità per condomino, millesimi sommati
 │   ├── 010_maggioranze_sondaggi.sql maggioranze richieste nei sondaggi
-│   └── 011_simulazione_visibile.sql simulazione visibile ai condomini
+│   ├── 011_simulazione_visibile.sql simulazione visibile ai condomini
+│   └── 012_correzione_dettaglio_simulazione.sql correzione di 011 (si può rieseguire)
 ├── web/                         sito pubblicato su GitHub Pages
 │   ├── config.js                ← URL e chiave pubblica Supabase
 │   ├── index.html
