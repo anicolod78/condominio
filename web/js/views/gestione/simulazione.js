@@ -1,7 +1,8 @@
 import { supabase } from '../../supabase.js';
 import { NOME_CONDOMINIO } from '../../../config.js';
 import { esc, ensure, flash, guarded, bindForm, fmtDate, fmtMillesimi, sortAttrs, sortControl, bindSort } from '../../ui.js';
-import { hasMajority, describeMajority, evaluate, majorityLine, majorityFields, bindMajorityFields, readMajority } from '../../majority.js';
+import { hasMajority, majorityFields, bindMajorityFields, readMajority } from '../../majority.js';
+import { simulationSummary, tallyFromChoices, VISIBILITY } from '../../simulation-summary.js';
 
 const firstCode = (r) => (r.units ?? []).map((u) => u.unit_code).filter(Boolean).sort()[0] ?? '';
 
@@ -46,6 +47,13 @@ export async function render(panel, pollId) {
       <p class="print-only small">Documento di lavoro: le risposte sono simulate dall'amministrazione del portale
         e non costituiscono voto né delibera assembleare.</p>
       <div id="sim-summary"></div>
+      <form id="f-visibilita" class="visibility-form no-print">
+        <label>Visibilità della simulazione per i condomini
+          <select name="simulation_visibility">
+            ${VISIBILITY.map((v) => `<option value="${v.value}" ${poll.simulation_visibility === v.value ? 'selected' : ''}>${esc(v.label)}</option>`).join('')}
+          </select>
+        </label>
+      </form>
       <details class="majority-edit no-print">
         <summary>${hasMajority(poll) ? 'Cambia la maggioranza richiesta' : 'Imposta la maggioranza richiesta'}</summary>
         <form id="f-maggioranza" class="stack">
@@ -90,10 +98,18 @@ export async function render(panel, pollId) {
   const summary = panel.querySelector('#sim-summary');
   const tally = panel.querySelector('#sim-tally');
   const updateSummary = () => {
-    summary.innerHTML = summaryView(poll, options, residents, choices);
+    const { tally: counts, none, totalHeads } = tallyFromChoices(options, residents, choices);
+    summary.innerHTML = simulationSummary(poll, options, counts, none, totalHeads);
     tally.innerHTML = tallyView(options, residents, choices);
   };
   updateSummary();
+
+  const visibility = panel.querySelector('#f-visibilita [name=simulation_visibility]');
+  visibility.addEventListener('change', guarded(async () => {
+    ensure(await supabase.from('polls').update({ simulation_visibility: visibility.value }).eq('id', poll.id));
+    poll.simulation_visibility = visibility.value;
+    flash(visibility.value === 'nascosta' ? 'Simulazione nascosta ai condomini' : 'Visibilità aggiornata');
+  }));
 
   const majorityForm = panel.querySelector('#f-maggioranza');
   bindMajorityFields(majorityForm);
@@ -185,38 +201,4 @@ function tallyView(options, residents, choices) {
     ...options.map((o) => `<span><strong>${esc(o.label)}</strong> ${fmtMillesimi(sums.get(o.id))}‰</span>`),
     `<span class="muted">Senza risposta ${fmtMillesimi(none)}‰</span>`,
   ].join('');
-}
-
-function summaryView(poll, options, residents, choices) {
-  const total = residents.reduce((sum, r) => sum + Number(r.millesimi), 0);
-  const pct = (value) => `${(total ? Math.round((value / total) * 1000) / 10 : 0).toLocaleString('it-IT')}%`;
-
-  const tally = new Map(options.map((o) => [o.id, { count: 0, millesimi: 0 }]));
-  const none = { count: 0, millesimi: 0 };
-  for (const r of residents) {
-    const bucket = tally.get(choices.get(r.id)) ?? none;
-    bucket.count += 1;
-    bucket.millesimi += Number(r.millesimi);
-  }
-  const answered = residents.length - none.count;
-  const totalHeads = residents.filter((r) => Number(r.millesimi) > 0).length;
-
-  const row = (label, t, extraClass = '', majority = '') => `
-    <div class="bar-row ${extraClass}">
-      <span>${esc(label)}</span>
-      <span class="muted small">${t.count} test${t.count === 1 ? 'a' : 'e'} · <strong>${fmtMillesimi(t.millesimi)} ‰</strong> · ${pct(t.millesimi)}</span>
-      <div class="bar"><div style="width:${total ? (t.millesimi / total) * 100 : 0}%"></div></div>
-      ${majority}
-    </div>`;
-  const majorityFor = (t) => majorityLine(evaluate(poll, { votes: t.count, millesimi: t.millesimi }, { answered, totalHeads }), t.count, t.millesimi);
-
-  return `
-    <p class="small">Risposte: <strong>${answered}</strong> su ${residents.length} teste ·
-      ${fmtMillesimi(total - none.millesimi)} millesimi su ${fmtMillesimi(total)} (${pct(total - none.millesimi)})</p>
-    ${hasMajority(poll) ? `<p class="small majority-rule">Maggioranza richiesta: ${esc(describeMajority(poll))}</p>` : ''}
-    <div class="results">
-      ${options.map((o) => row(o.label, tally.get(o.id), '', majorityFor(tally.get(o.id)))).join('')}
-      ${row('Senza risposta', none, 'muted-row')}
-    </div>
-    <p class="muted small">Le percentuali sono calcolate sul totale dei millesimi in anagrafica.</p>`;
 }

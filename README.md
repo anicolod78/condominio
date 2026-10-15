@@ -18,7 +18,8 @@ condominio/
 │   ├── 007_simulazione_sondaggi.sql simulazione dei sondaggi (solo admin)
 │   ├── 008_codici_unita.sql     codice unità immobiliare nell'anagrafica
 │   ├── 009_unita_immobiliari.sql più unità per condomino, millesimi sommati
-│   └── 010_maggioranze_sondaggi.sql maggioranze richieste nei sondaggi
+│   ├── 010_maggioranze_sondaggi.sql maggioranze richieste nei sondaggi
+│   └── 011_simulazione_visibile.sql simulazione visibile ai condomini
 ├── web/                         sito pubblicato su GitHub Pages
 │   ├── config.js                ← URL e chiave pubblica Supabase
 │   ├── index.html
@@ -43,7 +44,7 @@ Nell'elenco condomini email e telefono sono visibili agli altri solo se la perso
 
 **Anagrafica e millesimi.** Ogni condomino può possedere più unità immobiliari e vota una sola volta, con la somma dei loro millesimi. L'elenco dei condomini è indipendente dagli account: una scheda può esistere senza email e senza accesso al portale. Quando qualcuno accetta un invito, il suo account si collega alla scheda con la stessa email. Nei sondaggi, a ogni opzione si sommano i millesimi delle schede di chi l'ha votata. Le percentuali sono calcolate sul totale dei millesimi in anagrafica. Chi ha accesso al portale ma 0 millesimi (es. un familiare) conta nel numero dei voti, non nei millesimi.
 
-**Simulazione dei sondaggi (solo admin).** Da **Gestione → Sondaggi → Simulazione** (oppure dal pulsante *Simulazione* sotto ogni sondaggio) l'admin indica una risposta per ogni scheda dell'anagrafica, anche per chi non è iscritto al portale, e vede subito i risultati in teste e millesimi. Le risposte simulate restano salvate a parte, sono visibili solo agli admin e non modificano i voti reali.
+**Simulazione dei sondaggi (solo admin).** Da **Gestione → Sondaggi → Simulazione** (oppure dal pulsante *Simulazione* sotto ogni sondaggio) l'admin indica una risposta per ogni scheda dell'anagrafica, anche per chi non è iscritto al portale, e vede subito i risultati in teste e millesimi. Le risposte simulate restano salvate a parte, si modificano solo dagli admin e non modificano i voti reali. Una volta avviata, la simulazione è visibile in sola lettura anche ai condomini (pulsante *Vedi la simulazione* nella pagina Sondaggi), secondo la scelta dell'admin per ogni sondaggio: **solo riepilogo** (predefinito, senza nomi), **riepilogo e dettaglio per condomino**, oppure **nascosta**.
 
 **Maggioranze.** Per ogni sondaggio si può indicare la maggioranza richiesta, scegliendo fra nomina o revoca dell'amministratore (art. 1136 c. 4 c.c., doppia maggioranza in ogni convocazione), 1ª convocazione, 2ª convocazione e innovazioni, oppure con una regola personalizzata (teste e/o millesimi minimi). Le frazioni sono calcolate sul totale `TOTALE_MILLESIMI`. Le teste contano i condomini che hanno risposto (o, a scelta, tutti i condomini). Risultati e simulazione indicano per ogni opzione se la maggioranza è raggiunta: con la doppia maggioranza servono entrambe le condizioni. La maggioranza si imposta alla creazione del sondaggio o dalla pagina di simulazione.
 
@@ -60,7 +61,7 @@ I voti sono riservati: ognuno vede solo il proprio. I risultati complessivi comp
 
 ### 2. Crea il database
 1. Menu **SQL Editor** → **New query**.
-2. Incolla tutto il contenuto di [`supabase/schema.sql`](supabase/schema.sql) e premi **Run**. Poi fai lo stesso, ognuno in una nuova query, con [`supabase/002_elenco_condomini.sql`](supabase/002_elenco_condomini.sql), [`supabase/003_sicurezza_funzioni.sql`](supabase/003_sicurezza_funzioni.sql), [`supabase/004_data_documenti.sql`](supabase/004_data_documenti.sql), [`supabase/005_anagrafica_millesimi.sql`](supabase/005_anagrafica_millesimi.sql), [`supabase/006_allegati_documenti.sql`](supabase/006_allegati_documenti.sql), [`supabase/007_simulazione_sondaggi.sql`](supabase/007_simulazione_sondaggi.sql), [`supabase/008_codici_unita.sql`](supabase/008_codici_unita.sql), [`supabase/009_unita_immobiliari.sql`](supabase/009_unita_immobiliari.sql) e [`supabase/010_maggioranze_sondaggi.sql`](supabase/010_maggioranze_sondaggi.sql). Gli script vanno eseguiti in ordine, una volta sola.
+2. Incolla tutto il contenuto di [`supabase/schema.sql`](supabase/schema.sql) e premi **Run**. Poi fai lo stesso, ognuno in una nuova query, con [`supabase/002_elenco_condomini.sql`](supabase/002_elenco_condomini.sql), [`supabase/003_sicurezza_funzioni.sql`](supabase/003_sicurezza_funzioni.sql), [`supabase/004_data_documenti.sql`](supabase/004_data_documenti.sql), [`supabase/005_anagrafica_millesimi.sql`](supabase/005_anagrafica_millesimi.sql), [`supabase/006_allegati_documenti.sql`](supabase/006_allegati_documenti.sql), [`supabase/007_simulazione_sondaggi.sql`](supabase/007_simulazione_sondaggi.sql), [`supabase/008_codici_unita.sql`](supabase/008_codici_unita.sql), [`supabase/009_unita_immobiliari.sql`](supabase/009_unita_immobiliari.sql), [`supabase/010_maggioranze_sondaggi.sql`](supabase/010_maggioranze_sondaggi.sql) e [`supabase/011_simulazione_visibile.sql`](supabase/011_simulazione_visibile.sql). Gli script vanno eseguiti in ordine, una volta sola.
 3. Controlla che in **Table Editor** compaiano `profiles`, `announcements`, `documents`, `polls`, `poll_options` e `votes`, e che in **Storage** ci sia il bucket `documenti`.
 
 ### 3. Configura l'autenticazione

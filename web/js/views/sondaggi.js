@@ -1,15 +1,24 @@
 import { supabase } from '../supabase.js';
 import { esc, nl2br, fmtDate, fmtMillesimi, ensure, flash, bindForm, onEach } from '../ui.js';
 import { hasMajority, describeMajority, evaluate, majorityLine } from '../majority.js';
+import * as simulazionePubblica from './simulazione-pubblica.js';
 
 const isOpen = (poll) => !poll.closes_at || new Date(poll.closes_at) > new Date();
 
 export async function render(app, ctx) {
-  const [polls, myVotes] = await Promise.all([
+  // "#/sondaggi/simulazione/<id>": simulazione in sola lettura
+  if (ctx.sub === 'simulazione') {
+    await simulazionePubblica.render(app, Number(ctx.args?.[0]));
+    return;
+  }
+
+  const [polls, myVotes, simulations] = await Promise.all([
     supabase.from('polls').select('*, poll_options(*)').order('created_at', { ascending: false }).then(ensure),
     supabase.from('votes').select('poll_id, option_id').eq('user_id', ctx.profile.id).then(ensure),
+    supabase.rpc('visible_simulations').then(ensure),
   ]);
   const voted = new Map(myVotes.map((v) => [v.poll_id, v.option_id]));
+  const withSimulation = new Set(simulations.map((s) => s.poll_id));
 
   // I risultati si vedono dopo aver votato o a sondaggio chiuso
   const results = new Map(await Promise.all(
@@ -21,7 +30,7 @@ export async function render(app, ctx) {
   app.innerHTML = `
     <h1>Sondaggi</h1>
     <p class="muted small">I sondaggi sono consultivi e non sostituiscono le delibere dell'assemblea condominiale.</p>
-    ${polls.length ? polls.map((p) => card(p, voted.get(p.id), results.get(p.id), ctx.isAdmin)).join('') : '<p class="muted">Nessun sondaggio.</p>'}`;
+    ${polls.length ? polls.map((p) => card(p, voted.get(p.id), results.get(p.id), ctx.isAdmin, withSimulation.has(p.id))).join('') : '<p class="muted">Nessun sondaggio.</p>'}`;
 
   app.querySelectorAll('form[data-poll]').forEach((form) => bindForm(form, async () => {
     const choice = form.querySelector('input[name=option]:checked');
@@ -49,7 +58,7 @@ export async function render(app, ctx) {
   });
 }
 
-function card(poll, myOption, results, isAdmin) {
+function card(poll, myOption, results, isAdmin, hasSimulation) {
   const open = isOpen(poll);
   const options = [...poll.poll_options].sort((a, b) => a.position - b.position);
   const status = open
@@ -66,8 +75,12 @@ function card(poll, myOption, results, isAdmin) {
       ${open ? voteForm(poll, options, myOption) : ''}
       ${hasMajority(poll) ? `<p class="small majority-rule">Maggioranza richiesta: ${esc(describeMajority(poll))}</p>` : ''}
       ${results ? resultsView(poll, options, results, myOption) : ''}
+      ${!isAdmin && hasSimulation ? `<div class="row">
+        <a class="button-link" href="#/sondaggi/simulazione/${poll.id}">Vedi la simulazione</a>
+      </div>` : ''}
       ${isAdmin ? `<div class="row">
         <a class="button-link" href="#/gestione/sondaggi/${poll.id}">Simulazione</a>
+        ${hasSimulation ? `<a class="button-link" href="#/sondaggi/simulazione/${poll.id}">Vista condomini</a>` : ''}
         ${open ? `<button class="link" data-close="${poll.id}">Chiudi ora</button>` : ''}
         <button class="link danger" data-delete="${poll.id}">Elimina</button>
       </div>` : ''}

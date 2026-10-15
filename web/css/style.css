@@ -405,3 +405,8 @@ a { color: var(--accent); }
   .sim select { display: none; }
   .answer-text { font-weight: 600; }
 }
+
+/* Simulazione: visibilità per i condomini e vista in sola lettura */
+.visibility-form { margin-top: 12px; }
+.visibility-form label { font-size: .9rem; }
+.sim.readonly .answer-text { font-weight: 500; }
